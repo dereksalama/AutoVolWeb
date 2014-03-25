@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -39,6 +38,9 @@ public class SMOClassifyServlet extends HttpServlet {
     	Map<String, String[]> attrMap = req.getParameterMap();
     	for (Entry<String, String[]> e : attrMap.entrySet()) {
     		Attribute attr = data.attribute(e.getKey());
+    		if (attr == null) {
+    			continue;
+    		}
     		Double val = Double.valueOf(e.getValue()[0]);
     		target.setValue(attr, val);
     	}
