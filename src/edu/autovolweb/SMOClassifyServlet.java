@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import weka.classifiers.functions.SMO;
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
@@ -32,7 +33,7 @@ public class SMOClassifyServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
     	
-    	Instance   target = new Instance(data.numAttributes());
+    	Instance   target = new DenseInstance(data.numAttributes());
     	target.setDataset(data);
     	
     	Map<String, String[]> attrMap = req.getParameterMap();
