@@ -33,7 +33,7 @@ public class SMOClassifyServlet extends HttpServlet {
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws IOException {
     	
-    	Instance   target = new DenseInstance(data.numAttributes());
+    	Instance target = new DenseInstance(data.numAttributes());
     	target.setDataset(data);
     	
     	Map<String, String[]> attrMap = req.getParameterMap();

@@ -8,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,6 +24,7 @@ import org.joda.time.DateTime;
 import weka.clusterers.EM;
 import weka.clusterers.FilteredClusterer;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.converters.ArffSaver;
 import weka.filters.unsupervised.attribute.Normalize;
 
@@ -135,18 +135,12 @@ public class DataUploadServlet extends HttpServlet {
 				 writer.write(json);
 				 writer.close();
 				 
-				 
 				 // save EM model
-				 ObjectOutputStream oos = new ObjectOutputStream(
-						 new FileOutputStream(EM_MODEL_FILE, false));
-				 oos.writeObject(em);
-				 oos.flush();
-				 oos.close();
+				 SerializationHelper.write(new FileOutputStream(EM_MODEL_FILE, false), em);
 			 } catch (Exception e) {
 				 e.printStackTrace();
 			 }
 		 }
-
 	 }
 	
 
