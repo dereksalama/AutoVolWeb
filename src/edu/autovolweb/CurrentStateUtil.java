@@ -24,6 +24,15 @@ public class CurrentStateUtil {
 	}
 	
 	private static void addInstance(CurrentStateData state, Instances dataset) {
+		Instance i = toInstance(state, dataset);
+		dataset.add(i);
+	}
+	
+	public static Instance toInstance(CurrentStateData state) {
+		return toInstance(state, createDataset());
+	}
+	
+	private static Instance toInstance(CurrentStateData state, Instances dataset) {
 		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
 		i.setDataset(dataset);
 		
@@ -38,10 +47,11 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
 		i.setValue(dataset.attribute("activityConfidence"), state.getActivityConfidence());
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
-		dataset.add(i);
+		
+		return i;
 	}
 	
-	public static Instances convertCurrentStateData(String json) {
+	private static Instances createDataset() {
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		
 		attributes.add(new Attribute("time"));
@@ -83,6 +93,12 @@ public class CurrentStateUtil {
 		
 		Instances data = new Instances("Training", attributes, 0);
 		data.setClass(ringerAttr);
+		
+		return data;
+	}
+	
+	public static Instances convertCurrentStateData(String json) {
+		Instances data = createDataset();
 		
 		Collection<CurrentStateData> states = fromJson(json);
 		for (CurrentStateData state : states) {
