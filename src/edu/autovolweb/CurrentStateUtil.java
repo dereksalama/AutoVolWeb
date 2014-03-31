@@ -3,13 +3,13 @@ package edu.autovolweb;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import com.autovol.CurrentStateData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -18,8 +18,10 @@ public class CurrentStateUtil {
 
 	private static Collection<CurrentStateData> fromJson(String json) {
 		Gson gson = new Gson();
-		Type collectionType = new TypeToken<Collection<CurrentStateData>>(){}.getType();
-		Collection<CurrentStateData> data = gson.fromJson(json, collectionType);
+		TypeToken<Set<CurrentStateData>> typeToken = 
+				new TypeToken<Set<CurrentStateData>>(){};
+		Type collectionType = typeToken.getType();
+		Set<CurrentStateData> data = gson.fromJson(json, collectionType);
 		return data;
 	}
 	
@@ -56,7 +58,7 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("time"));
 		attributes.add(new Attribute("lat"));
-		attributes.add(new Attribute("lat"));
+		attributes.add(new Attribute("lon"));
 		
 		ArrayList<String> locProviderValues = new ArrayList<String>();
 		locProviderValues.add("gps");
@@ -74,12 +76,12 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("charging", chargingValues));
 		
 		ArrayList<String> activityValues = new ArrayList<String>();
-		chargingValues.add("activity_vehicle");
-		chargingValues.add("activity_bike");
-		chargingValues.add("activity_foot");
-		chargingValues.add("activity_still");
-		chargingValues.add("activity_unknown");
-		chargingValues.add("activity_tilting");
+		activityValues.add("activity_vehicle");
+		activityValues.add("activity_bike");
+		activityValues.add("activity_foot");
+		activityValues.add("activity_still");
+		activityValues.add("activity_unknown");
+		activityValues.add("activity_tilting");
 		attributes.add(new Attribute("activity_type", activityValues));
 		
 		attributes.add(new Attribute("activity_confidence"));

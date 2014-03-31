@@ -20,8 +20,6 @@ import weka.clusterers.FilteredClusterer;
 import weka.core.Instance;
 import weka.core.SerializationHelper;
 
-import com.autovol.CurrentStateData;
-import com.autovol.GMClassifyResponse;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
