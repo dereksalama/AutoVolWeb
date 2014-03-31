@@ -149,8 +149,23 @@ public class DataUploadServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
-		final String incomingDataString = request.getParameter("data");
-		executor.submit(new RetrainRunnable(incomingDataString));
+		//final String incomingDataString = request.getParameter("data");
+		StringBuffer buffer = new StringBuffer();
+		String line = null;
+
+		BufferedReader reader = request.getReader();
+		while ((line = reader.readLine()) != null) {
+			buffer.append(line);
+		}
+
+		String incomingDataString = buffer.toString();
+		if (incomingDataString == null) {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		//TODO: put back after debugging
+		//executor.submit(new RetrainRunnable(incomingDataString));
+		new RetrainRunnable(incomingDataString).run();
 
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}
