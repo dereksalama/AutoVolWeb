@@ -91,5 +91,10 @@ public class EMCluster {
 	public void setProbOfLabel(Double probOfLabel) {
 		this.probOfLabel = probOfLabel;
 	}
+	
+	@Override
+	public String toString() {
+		return "ringer: " + ringerLabel + ", prob: " + probOfLabel;
+	}
 
 }

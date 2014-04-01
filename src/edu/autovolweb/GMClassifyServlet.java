@@ -40,7 +40,7 @@ public class GMClassifyServlet extends HttpServlet {
 		String json = request.getParameter("target");
 		Gson gson = new Gson();
 		CurrentStateData state = gson.fromJson(json, CurrentStateData.class);
-		Instance target = CurrentStateUtil.toInstance(state);
+		Instance target = CurrentStateUtil.toUnlabeledInstance(state);
 		
 		try {
 			double[] distrib = em.distributionForInstance(target);
