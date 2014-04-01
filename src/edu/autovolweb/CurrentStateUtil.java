@@ -47,7 +47,7 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
-		i.setValue(dataset.attribute("activityConfidence"), state.getActivityConfidence());
+		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
 		
 		return i;

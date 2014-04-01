@@ -26,7 +26,9 @@ import weka.clusterers.FilteredClusterer;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 import weka.core.converters.ArffSaver;
+import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
+import weka.filters.unsupervised.attribute.Remove;
 
 import com.google.gson.Gson;
 
@@ -67,7 +69,7 @@ public class DataUploadServlet extends HttpServlet {
 		 @Override
 		 public void run() {
 			 // interpret incoming data
-			 Instances incomingData = CurrentStateUtil.convertCurrentStateData(newData);
+			 Instances allData = CurrentStateUtil.convertCurrentStateData(newData);
 
 			 // write to today's file
 			 DateTime today = new DateTime();
@@ -76,16 +78,13 @@ public class DataUploadServlet extends HttpServlet {
 
 			 File newFile = new File(newFileName);
 			 ArffSaver saver = new ArffSaver();
-			 saver.setInstances(incomingData);
+			 saver.setInstances(allData);
 			 try {
 				saver.setFile(newFile);
 				saver.writeBatch();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			 
-			 Instances allData = new Instances(incomingData);
-			 allData.setClassIndex(allData.numAttributes() - 1);
 
 			 // load previous data (up to how old?)
 			 for (int i = 1; i < DATA_AGE; i++) {
@@ -112,17 +111,22 @@ public class DataUploadServlet extends HttpServlet {
 			 EM unfilteredEM = new EM();
 			 unfilteredEM.setMaximumNumberOfClusters(20);
 			 Normalize normalizer = new Normalize();
-			 normalizer.setIgnoreClass(true);
+			 
+			 Remove removeClass = new Remove();
+			 removeClass.setAttributeIndices("" + (allData.classIndex() + 1));
 
 
 			 try {
-				 normalizer.setInputFormat(allData);
+				 removeClass.setInputFormat(allData);
+				 Instances dataClassRemoved = Filter.useFilter(allData, removeClass);
+				 
+				 normalizer.setInputFormat(dataClassRemoved);
 				 FilteredClusterer em = new FilteredClusterer();
 				 em.setClusterer(unfilteredEM);
 				 em.setFilter(normalizer);
-				 em.buildClusterer(allData);
+				 em.buildClusterer(dataClassRemoved);
 				 List<EMCluster> clusterToLabels = EMCluster
-						 .createClusterToLabelMap(allData, em);
+						 .createClusterToLabelMap(allData, dataClassRemoved, em);
 				 
 				 
 				 // save cluster labels
