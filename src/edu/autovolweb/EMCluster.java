@@ -22,23 +22,27 @@ public class EMCluster {
 		 return maxCluster;
 	}
 	
-	public static ArrayList<EMCluster> createClusterToLabelMap(Instances allData, FilteredClusterer em) {
+	public static ArrayList<EMCluster> createClusterToLabelMap(Instances labeledData, Instances unlabeledData, FilteredClusterer em) {
 
 		try {
 			 // associate clusters with ringer labels
 			 int[][] clusterLabelCounts = new int[em.numberOfClusters()]
-					 [allData.classAttribute().numValues()];
-			 for (Instance i : allData) {
-				 double[] distribs = em.distributionForInstance(i);
+					 [labeledData.classAttribute().numValues()];
+			 
+			// for (Instance i : unlabeledData) {
+			for (int ind = 0; ind < labeledData.numInstances(); ind++) {
+				 Instance labeled = labeledData.instance(ind);
+				 Instance unlabeled = unlabeledData.instance(ind);
+				 double[] distribs = em.distributionForInstance(unlabeled);
 				 int maxCluster = EMCluster.findMaxCluster(distribs);
-				 clusterLabelCounts[maxCluster][(int) i.classValue()]++;
+				 clusterLabelCounts[maxCluster][(int) labeled.classValue()]++;
 			 }
 			 
 			 // list(i) -> majority label for ith cluster
 			 ArrayList<EMCluster> clusterToLabelMap = 
 					 new ArrayList<EMCluster>(em.numberOfClusters());
 			 for (int i = 0; i < em.numberOfClusters(); i++) {
-				 List<Integer> countList = new ArrayList<Integer>(allData.numClasses());
+				 List<Integer> countList = new ArrayList<Integer>(labeledData.numClasses());
 				 long totalCount = 0;
 				 for (int j = 0; j < clusterLabelCounts[i].length; j++) {
 					 countList.add(clusterLabelCounts[i][j]);
@@ -47,7 +51,7 @@ public class EMCluster {
 				 
 				 Integer maxCount = Collections.max(countList);
 				 int maxLabel = countList.indexOf(maxCount);
-				 String maxLabelString = allData.classAttribute().value(maxLabel);
+				 String maxLabelString = labeledData.classAttribute().value(maxLabel);
 				 EMCluster cluster = new EMCluster();
 				 cluster.setRingerLabel(maxLabelString);
 		
