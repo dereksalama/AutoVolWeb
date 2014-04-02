@@ -55,6 +55,7 @@ public class EMCluster {
 				 EMCluster cluster = new EMCluster();
 				 cluster.setRingerLabel(maxLabelString);
 				 cluster.setCluster(i);
+
 		
 				 double probOfLabel = maxCount / totalCount;
 				 cluster.setProbOfLabel(probOfLabel);
@@ -75,6 +76,7 @@ public class EMCluster {
 	private String ringerLabel;
 	private Double probOfLabel;
 	private Integer cluster;
+
 	
 	public EMCluster() {}
 	

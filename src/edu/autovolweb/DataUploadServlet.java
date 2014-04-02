@@ -5,7 +5,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -88,6 +87,7 @@ public class DataUploadServlet extends HttpServlet {
 					e.printStackTrace();
 				}
 			 }
+
 			 ArffSaver saver = new ArffSaver();
 			 saver.setInstances(allData);
 			 try {
@@ -105,8 +105,6 @@ public class DataUploadServlet extends HttpServlet {
 				 File f = new File(fileName);
 				 if (f.exists()) {
 					 try {
-						 //BufferedReader reader = new BufferedReader(new FileReader(f));
-						 //Instances moreData = new Instances(reader);
 						 ArffLoader loader = new ArffLoader();
 						 loader.setFile(f);
 						 Instances moreData = loader.getDataSet();
@@ -133,6 +131,7 @@ public class DataUploadServlet extends HttpServlet {
 			 try {
 				 removeClass.setInputFormat(allData);
 				 Instances dataClassRemoved = Filter.useFilter(allData, removeClass);
+
 				 normalizer.setInputFormat(dataClassRemoved);
 				 FilteredClusterer em = new FilteredClusterer();
 				 em.setClusterer(unfilteredEM);
