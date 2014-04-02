@@ -54,6 +54,7 @@ public class EMCluster {
 				 String maxLabelString = labeledData.classAttribute().value(maxLabel);
 				 EMCluster cluster = new EMCluster();
 				 cluster.setRingerLabel(maxLabelString);
+				 cluster.setCluster(i);
 		
 				 double probOfLabel = maxCount / totalCount;
 				 cluster.setProbOfLabel(probOfLabel);
@@ -73,6 +74,7 @@ public class EMCluster {
 	/* data object */
 	private String ringerLabel;
 	private Double probOfLabel;
+	private Integer cluster;
 	
 	public EMCluster() {}
 	
@@ -94,7 +96,15 @@ public class EMCluster {
 	
 	@Override
 	public String toString() {
-		return "ringer: " + ringerLabel + ", prob: " + probOfLabel;
+		return "cluster: " + cluster + ", ringer: " + ringerLabel + ", prob: " + probOfLabel;
+	}
+
+	public Integer getCluster() {
+		return cluster;
+	}
+
+	public void setCluster(Integer cluster) {
+		this.cluster = cluster;
 	}
 
 }

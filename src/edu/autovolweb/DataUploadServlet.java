@@ -25,6 +25,7 @@ import weka.clusterers.EM;
 import weka.clusterers.FilteredClusterer;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
+import weka.core.converters.ArffLoader;
 import weka.core.converters.ArffSaver;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
@@ -77,6 +78,16 @@ public class DataUploadServlet extends HttpServlet {
 					 today.getMonthOfYear() + "_" + today.getYear();
 
 			 File newFile = new File(newFileName);
+			 if (newFile.exists()) {
+				 ArffLoader loader = new ArffLoader();
+				 try {
+					loader.setFile(newFile);
+					Instances oldData = loader.getDataSet();
+					allData.addAll(oldData);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			 }
 			 ArffSaver saver = new ArffSaver();
 			 saver.setInstances(allData);
 			 try {
@@ -94,14 +105,17 @@ public class DataUploadServlet extends HttpServlet {
 				 File f = new File(fileName);
 				 if (f.exists()) {
 					 try {
-						BufferedReader reader = new BufferedReader(new FileReader(f));
-						Instances moreData = new Instances(reader);
-						allData.addAll(moreData);
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+						 //BufferedReader reader = new BufferedReader(new FileReader(f));
+						 //Instances moreData = new Instances(reader);
+						 ArffLoader loader = new ArffLoader();
+						 loader.setFile(f);
+						 Instances moreData = loader.getDataSet();
+						 allData.addAll(moreData);
+					 } catch (FileNotFoundException e) {
+						 e.printStackTrace();
+					 } catch (IOException e) {
+						 e.printStackTrace();
+					 }
 				 } else {
 					 break; // have gone past oldest file
 				 }
@@ -119,7 +133,6 @@ public class DataUploadServlet extends HttpServlet {
 			 try {
 				 removeClass.setInputFormat(allData);
 				 Instances dataClassRemoved = Filter.useFilter(allData, removeClass);
-				 
 				 normalizer.setInputFormat(dataClassRemoved);
 				 FilteredClusterer em = new FilteredClusterer();
 				 em.setClusterer(unfilteredEM);

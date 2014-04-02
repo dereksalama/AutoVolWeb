@@ -17,6 +17,7 @@ import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.CSVLoader;
+import weka.core.neighboursearch.KDTree;
 
 import com.google.gson.JsonObject;
 
@@ -28,6 +29,7 @@ public class SMOClassifyServlet extends HttpServlet {
 	private static final long serialVersionUID = 4544453414238079731L;
 	private Instances data;
 	private SMO smo;
+	private KDTree kd;
 	
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -46,22 +48,54 @@ public class SMOClassifyServlet extends HttpServlet {
     		target.setValue(attr, val);
     	}
     	
-    	double result;
+    	String smoResult = "err";
     	try {
-			result = smo.classifyInstance(target);
+			double classVal = smo.classifyInstance(target);
+			smoResult = data.classAttribute().value((int) classVal);
 		} catch (Exception e1) {
 			e1.printStackTrace();
-			result = -1;
 		}
     	
     	JsonObject json = new JsonObject();
         resp.setContentType("text/plain");
 
-
-		json.addProperty("ringer_type", result);
+		json.addProperty("smo", smoResult);
+		
+		String kdThree = kdClassify(target, 3);
+		json.addProperty("k3", kdThree);
+		
+		String kdFive = kdClassify(target, 7);
+		json.addProperty("k7", kdFive);
+		
+		
 	    resp.getWriter().write(json.toString());
 
 
+    }
+    
+    private String kdClassify(Instance target, int k) {
+    	String result = "err";
+		try {
+			Instances neighbors = kd.kNearestNeighbours(target, 3);
+			int[] classCounts = new int[data.classAttribute().numValues()];
+			for (Instance n : neighbors) {
+				classCounts[(int) Math.round(n.classValue())]++;
+			}
+			
+			int maxIndex = 0;
+			int maxCount = Integer.MIN_VALUE;
+			for (int i = 0; i < data.classAttribute().numValues(); i++) {
+				if (classCounts[i] > maxCount) {
+					maxCount = classCounts[i];
+					maxIndex = i;
+				}
+			}
+			
+			return data.classAttribute().value(maxIndex);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+    	return result;
     }
     
     @Override
@@ -77,6 +111,9 @@ public class SMOClassifyServlet extends HttpServlet {
 			smo = new SMO();
 			smo.buildClassifier(data);
 			dataFileStream.close();
+			
+			kd = new KDTree();
+			kd.setInstances(data);
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new ServletException("Unable to load csvfile");
