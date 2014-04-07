@@ -2,15 +2,17 @@ package edu.autovolweb;
 
 public class CurrentStateData {
 	
-	public static final int NUM_ATTRS = 11;
+	public static final int NUM_ATTRS = 13;
 
+	private double day;
 	private double time;
 	private double lat;
-	private double lon; // "long"
+	private double lon;
 	private String locProvider;
 	private double light;
 	private double distance;
 	private double wifiCount;
+	private double btCount;
 	private String charging;
 	private String activityType;
 	private double activityConfidence;
@@ -23,6 +25,7 @@ public class CurrentStateData {
 	
 	// Deep copy
 	public CurrentStateData(CurrentStateData data) {
+		day = data.getDay();
 		time = data.getTime();
 		lat = data.getLat();
 		lon = data.getLon();
@@ -30,6 +33,7 @@ public class CurrentStateData {
 		light = data.getLight();
 		distance = data.getDistance();
 		wifiCount = data.getWifiCount();
+		btCount = data.getBtCount();
 		charging = data.getCharging();
 		activityType = data.getActivityType();
 		activityConfidence = data.getActivityConfidence();
@@ -122,5 +126,21 @@ public class CurrentStateData {
 
 	public void setRinger(String ringer) {
 		this.ringer = ringer;
+	}
+
+	public double getDay() {
+		return day;
+	}
+
+	public void setDay(double day) {
+		this.day = day;
+	}
+
+	public double getBtCount() {
+		return btCount;
+	}
+
+	public void setBtCount(double btCount) {
+		this.btCount = btCount;
 	}
 }

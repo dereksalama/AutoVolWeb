@@ -77,7 +77,10 @@ public class EMCluster {
 				 cluster.setRingerLabel(maxLabelString);
 				 cluster.setCluster(i);
 				 
-				 double probOfLabel = ((double) maxCount) / totalCount; // force floating point
+				 double probOfLabel = 0;
+				 if (totalCount != 0) {
+					 probOfLabel = ((double) maxCount) / totalCount; // force floating point
+				 }
 				 cluster.setProbOfLabel(probOfLabel);
 				 
 				 clusterToLabelMap.add(i, cluster);
