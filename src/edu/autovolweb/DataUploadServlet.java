@@ -69,7 +69,7 @@ public class DataUploadServlet extends HttpServlet {
 	 }
 	 
 	 public static String constructFileName(DateTime day) {
-		 return "data4_" + day.getDayOfMonth() + "_" +
+		 return "data6_" + day.getDayOfMonth() + "_" +
 				 day.getMonthOfYear() + "_" + day.getYear();
 	 }
 	 

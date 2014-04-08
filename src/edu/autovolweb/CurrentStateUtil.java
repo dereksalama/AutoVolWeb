@@ -86,7 +86,7 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("time"), state.getTime());
 
 		i.setValue(dataset.attribute("light"), state.getLight());
-		i.setValue(dataset.attribute("distance"), state.getLat());
+		i.setValue(dataset.attribute("distance"), state.getDistance());
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
@@ -110,7 +110,7 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("lon"), state.getLon());
 		i.setValue(dataset.attribute("loc_provider"), state.getLocProvider());
 		i.setValue(dataset.attribute("light"), state.getLight());
-		i.setValue(dataset.attribute("distance"), state.getLat());
+		i.setValue(dataset.attribute("distance"), state.getDistance());
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
@@ -138,7 +138,7 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("lon"), state.getLon());
 		i.setValue(dataset.attribute("loc_provider"), state.getLocProvider());
 		i.setValue(dataset.attribute("light"), state.getLight());
-		i.setValue(dataset.attribute("distance"), state.getLat());
+		i.setValue(dataset.attribute("distance"), state.getDistance());
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
