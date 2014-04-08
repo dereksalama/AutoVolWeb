@@ -1,9 +1,5 @@
 package edu.autovolweb;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +14,6 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.SerializationHelper;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
 import weka.filters.unsupervised.attribute.Remove;
@@ -53,6 +48,58 @@ public class CurrentStateUtil {
 		return toUnlabeledInstance(state, createUnlabeledDataset());
 	}
 	
+	public static Instance toUnlabeledLocInstance(CurrentStateData state, String locCluster,
+			List<String> allLocClusters) {
+		return toUnlabeledLocInstance(state, locCluster, createUnlabeledLocDataset(allLocClusters));
+	}
+	
+	public static Instance extractLocInstance(CurrentStateData state) {
+		Instance locInstance = new DenseInstance(3);
+		
+		ArrayList<Attribute> locAttr = new ArrayList<>();
+		locAttr.add(new Attribute("lat"));
+		locAttr.add(new Attribute("lon"));
+		
+		ArrayList<String> locProviderValues = new ArrayList<String>();
+		locProviderValues.add("gps");
+		locProviderValues.add("network");
+		locProviderValues.add("fused");
+		locAttr.add(new Attribute("loc_provider", locProviderValues));
+		
+		
+		Instances locDataset = new Instances("loc_data", locAttr, 0);
+		locInstance.setDataset(locDataset);
+		
+		locInstance.setValue(locDataset.attribute("lat"), state.getLat());
+		locInstance.setValue(locDataset.attribute("lon"), state.getLon());
+		locInstance.setValue(locDataset.attribute("loc_provider"), state.getLocProvider());
+		
+		return locInstance;
+	}
+	
+	private static Instance toUnlabeledLocInstance(CurrentStateData state, String locCluster,
+			Instances dataset) {
+		Instance i = new DenseInstance(dataset.numAttributes());
+		i.setDataset(dataset);
+		
+		i.setValue(dataset.attribute("day"), state.getDay());
+		i.setValue(dataset.attribute("time"), state.getTime());
+
+		i.setValue(dataset.attribute("light"), state.getLight());
+		i.setValue(dataset.attribute("distance"), state.getLat());
+		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
+		i.setValue(dataset.attribute("charging"), state.getCharging());
+		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
+		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
+		
+		
+		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
+		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
+		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
+		i.setValue(dataset.attribute("loc"), locCluster);
+		return i;
+	}
+	
 	private static Instance toInstance(CurrentStateData state, Instances dataset) {
 		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
 		i.setDataset(dataset);
@@ -65,11 +112,18 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("light"), state.getLight());
 		i.setValue(dataset.attribute("distance"), state.getLat());
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
-		i.setValue(dataset.attribute("bt_count"), state.getBtCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
 		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
+		
+		
+		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
+		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
+		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
+		
+		
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
+
 		
 		return i;
 	}
@@ -86,10 +140,13 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("light"), state.getLight());
 		i.setValue(dataset.attribute("distance"), state.getLat());
 		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
-		i.setValue(dataset.attribute("bt_count"), state.getBtCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
 		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
+		
+		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
+		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
+		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
 		
 		return i;
 	}
@@ -111,7 +168,6 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
 		attributes.add(new Attribute("wifi_count"));
-		attributes.add(new Attribute("bt_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
@@ -128,6 +184,15 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("activity_type", activityValues));
 		
 		attributes.add(new Attribute("activity_confidence"));
+		
+		ArrayList<String> screenOnValues = new ArrayList<>();
+		screenOnValues.add("true");
+		screenOnValues.add("false");
+		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
+		attributes.add(screenOnAttr);
+		
+		attributes.add(new Attribute("screen_last_on"));
+		attributes.add(new Attribute("audio_mag"));
 		
 		ArrayList<String> ringerValues = new ArrayList<String>();
 		ringerValues.add("silent");
@@ -159,7 +224,6 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
 		attributes.add(new Attribute("wifi_count"));
-		attributes.add(new Attribute("bt_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
@@ -176,6 +240,57 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("activity_type", activityValues));
 		
 		attributes.add(new Attribute("activity_confidence"));
+		
+		ArrayList<String> screenOnValues = new ArrayList<>();
+		screenOnValues.add("true");
+		screenOnValues.add("false");
+		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
+		attributes.add(screenOnAttr);
+		
+		attributes.add(new Attribute("screen_last_on"));
+		attributes.add(new Attribute("audio_mag"));
+		
+		Instances data = new Instances("Training", attributes, 0);
+		
+		return data;
+	}
+	
+	private static Instances createUnlabeledLocDataset(List<String> locClusters) {
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+		
+		attributes.add(new Attribute("day"));
+		attributes.add(new Attribute("time"));
+		
+		attributes.add(new Attribute("light"));
+		attributes.add(new Attribute("distance"));
+		attributes.add(new Attribute("wifi_count"));
+		
+		ArrayList<String> chargingValues = new ArrayList<String>();
+		chargingValues.add("true");
+		chargingValues.add("false");
+		attributes.add(new Attribute("charging", chargingValues));
+		
+		ArrayList<String> activityValues = new ArrayList<String>();
+		activityValues.add("activity_vehicle");
+		activityValues.add("activity_bike");
+		activityValues.add("activity_foot");
+		activityValues.add("activity_still");
+		activityValues.add("activity_unknown");
+		activityValues.add("activity_tilting");
+		attributes.add(new Attribute("activity_type", activityValues));
+		
+		attributes.add(new Attribute("activity_confidence"));
+		
+		ArrayList<String> screenOnValues = new ArrayList<>();
+		screenOnValues.add("true");
+		screenOnValues.add("false");
+		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
+		attributes.add(screenOnAttr);
+		
+		attributes.add(new Attribute("screen_last_on"));
+		attributes.add(new Attribute("audio_mag"));
+		
+		attributes.add(new Attribute("loc", locClusters));
 		
 		Instances data = new Instances("Training", attributes, 0);
 		
@@ -246,13 +361,24 @@ public class CurrentStateUtil {
 		return clusterer;
 	}
 	
-	public static List<String> findTopClusters(SimpleKMeans km, Instances locData) {
+	public static SimpleKMeans trainUnfilteredLocationClusterer(Instances locData, int numClusters) throws Exception {
+		SimpleKMeans km = new SimpleKMeans();
+		km.setInitializeUsingKMeansPlusPlusMethod(true);
+		km.setPreserveInstancesOrder(true);
+		km.setNumClusters(numClusters); // ?
+	
+		km.buildClusterer(locData);
+		
+		return km;
+	}
+	
+	public static List<String> findTopClusters(SimpleKMeans km, int numInstances) {
 		int[] clusterSizes = km.getClusterSizes();
 		
 		// Find clusters that make top 90%
 		int[] sortedSizes = Arrays.copyOf(clusterSizes, clusterSizes.length);
 		Arrays.sort(sortedSizes);
-		int totalCount = locData.numInstances();
+		int totalCount = numInstances;
 		int sum = 0;
 		int include = 0;
 		for (int i = sortedSizes.length - 1; i >= 0; i--) {

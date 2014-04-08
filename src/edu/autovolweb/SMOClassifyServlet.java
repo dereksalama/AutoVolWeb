@@ -159,7 +159,7 @@ public class SMOClassifyServlet extends HttpServlet {
 			locData = CurrentStateUtil.extractLocationData(clusteredDataNoLoc, true);
 			locClusterer = CurrentStateUtil.trainLocationClusterer(locData);
 			List<String> topClusterList = CurrentStateUtil.findTopClusters((SimpleKMeans) locClusterer.getClusterer(), 
-					locData);
+					locData.numInstances());
 			locClusters = new HashSet<>(topClusterList.size());
 			locClusters.addAll(topClusterList);
 					

@@ -2,25 +2,25 @@ package edu.autovolweb;
 
 public class CurrentStateData {
 	
-	public static final int NUM_ATTRS = 13;
+
+	public static final int NUM_ATTRS = 15;
 
 	private double day;
 	private double time;
 	private double lat;
-	private double lon;
+	private double lon; // "long"
 	private String locProvider;
 	private double light;
 	private double distance;
 	private double wifiCount;
-	private double btCount;
 	private String charging;
 	private String activityType;
 	private double activityConfidence;
+	private double audioMag;
+	private String screenOn;
+	private double screenLastOn;
 	private String ringer;
 	
-	//TODO: audio?
-	
-	// no args constructor for gson
 	public CurrentStateData() {} 
 	
 	// Deep copy
@@ -33,10 +33,12 @@ public class CurrentStateData {
 		light = data.getLight();
 		distance = data.getDistance();
 		wifiCount = data.getWifiCount();
-		btCount = data.getBtCount();
 		charging = data.getCharging();
 		activityType = data.getActivityType();
 		activityConfidence = data.getActivityConfidence();
+		audioMag = data.getAudioMag();
+		screenOn = data.getScreenOn();
+		screenLastOn = data.getScreenLastOn();
 		ringer = data.getRinger();
 	}
 	
@@ -128,6 +130,22 @@ public class CurrentStateData {
 		this.ringer = ringer;
 	}
 
+	public double getAudioMag() {
+		return audioMag;
+	}
+
+	public void setAudioMag(double audioMag) {
+		this.audioMag = audioMag;
+	}
+
+	public String getScreenOn() {
+		return screenOn;
+	}
+
+	public void setScreenOn(String screenOn) {
+		this.screenOn = screenOn;
+	}
+
 	public double getDay() {
 		return day;
 	}
@@ -136,11 +154,11 @@ public class CurrentStateData {
 		this.day = day;
 	}
 
-	public double getBtCount() {
-		return btCount;
+	public double getScreenLastOn() {
+		return screenLastOn;
 	}
 
-	public void setBtCount(double btCount) {
-		this.btCount = btCount;
+	public void setScreenLastOn(double screenLastOn) {
+		this.screenLastOn = screenLastOn;
 	}
 }

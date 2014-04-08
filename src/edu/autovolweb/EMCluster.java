@@ -8,28 +8,6 @@ import weka.core.Instances;
 
 public class EMCluster {
 	
-	/* Static util methods */
-	public static int findMaxCluster(double[] distribs) {
-		/*
-		 List<Double> distribsList = new ArrayList<Double>(distribs.length);
-		 for (int j = 0; j < distribs.length; j++) {
-			 distribsList.add(distribs[j]);
-		 }
-		 Double maxVal = Collections.max(distribsList);
-		 int maxCluster = distribsList.indexOf(maxVal);
-		 */
-		int maxInd = 0;
-		double maxVal = -1;
-		for (int i = 0; i < distribs.length; i++) {
-			if (distribs[i] > maxVal) {
-				maxInd = i;
-				maxVal = distribs[i];
-			}
-		}
-
-		return maxInd;
-	}
-	
 	public static ArrayList<EMCluster> createClusterToLabelMap(Instances labeledData, Instances unlabeledData, FilteredClusterer em) {
 
 		try {
@@ -41,8 +19,7 @@ public class EMCluster {
 			for (int ind = 0; ind < labeledData.numInstances(); ind++) {
 				 Instance labeled = labeledData.instance(ind);
 				 Instance unlabeled = unlabeledData.instance(ind);
-				 double[] distribs = em.distributionForInstance(unlabeled);
-				 int maxCluster = EMCluster.findMaxCluster(distribs);
+				 int maxCluster = em.clusterInstance(unlabeled);
 				 clusterLabelCounts[maxCluster][(int) labeled.classValue()]++;
 			 }
 			 
@@ -64,10 +41,10 @@ public class EMCluster {
 				 int totalCount = 0;
 				 int maxCount = Integer.MIN_VALUE;
 				 int maxInd = 0;
-				 for (int j = 0; j < em.numberOfClusters(); j++) {
+				 for (int j = 0; j < labeledData.classAttribute().numValues(); j++) {
 					 int currentCount = clusterLabelCounts[i][j];
 					 totalCount += currentCount;
-					 if (currentCount > maxCount) {
+					 if (currentCount >= maxCount) {
 						 maxInd = j;
 						 maxCount = currentCount;
 					 }
