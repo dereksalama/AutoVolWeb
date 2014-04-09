@@ -29,9 +29,10 @@ public class DownloadClustersServlet extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		String userId = request.getParameter("user");
 		// Load cluster label mapping
 		byte[] encoded = Files.readAllBytes(Paths.get(
-				DataUploadServlet.CLUSTER_LABELS_FILE));
+				DataUploadServlet.constructUserFileName(userId, DataUploadServlet.CLUSTER_LABELS_FILE)));
 		String json = Charset.defaultCharset().decode(
 				ByteBuffer.wrap(encoded)).toString();
 		

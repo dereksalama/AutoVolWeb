@@ -49,13 +49,13 @@ public class ViewDataServlet extends HttpServlet {
 		Type collectionType = new TypeToken<List<EMCluster>>(){}.getType();
 		List<EMCluster> clusters = gson.fromJson(json, collectionType);
 		*/
-		
+		String userId = request.getParameter("user");
 		List<Instances> allInstances = new ArrayList<Instances>();
 		DateTime today = new DateTime();
 		// load previous data (up to how old?)
 		for (int i = 0; i < DataUploadServlet.DATA_AGE; i++) {
 			DateTime day = today.minusDays(i);
-			String fileName = DataUploadServlet.constructFileName(day);
+			String fileName = DataUploadServlet.constructArffFileName(day, userId, this);
 			File f = new File(fileName);
 			if (f.exists()) {
 				try {
