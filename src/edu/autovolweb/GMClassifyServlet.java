@@ -133,6 +133,7 @@ public class GMClassifyServlet extends HttpServlet {
 			
 			JsonObject json = new JsonObject();
 			json.addProperty("label", label);
+			json.addProperty("cluster", maxCluster);
 			json.addProperty("prob_cluster", probOfCluster);
 			json.addProperty("prob_label", probOfLabel);
 			json.addProperty("loc_cluster", target.value(target.numAttributes() - 1));
