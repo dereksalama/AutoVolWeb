@@ -1,8 +1,15 @@
 package edu.autovolweb;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,11 +23,15 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import weka.clusterers.EM;
 import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import weka.core.converters.ArffLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
@@ -32,30 +43,14 @@ import weka.filters.unsupervised.attribute.Remove;
 @WebServlet("/ViewDataServlet")
 public class ViewDataServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
-	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
-		// Load cluster label mapping
-		/*
-		byte[] encoded = Files.readAllBytes(Paths.get(
-				DataUploadServlet.CLUSTER_LABELS_FILE));
-		String json = Charset.defaultCharset().decode(
-				ByteBuffer.wrap(encoded)).toString();
-		
-		Gson gson = new Gson();
-		Type collectionType = new TypeToken<List<EMCluster>>(){}.getType();
-		List<EMCluster> clusters = gson.fromJson(json, collectionType);
-		*/
-		String userId = request.getParameter("user");
+	
+	public static Instances loadAllData(String userId, HttpServlet servlet) {
 		List<Instances> allInstances = new ArrayList<Instances>();
 		DateTime today = new DateTime();
 		// load previous data (up to how old?)
 		for (int i = 0; i < DataUploadServlet.DATA_AGE; i++) {
 			DateTime day = today.minusDays(i);
-			String fileName = DataUploadServlet.constructArffFileName(day, userId, this);
+			String fileName = DataUploadServlet.constructArffFileName(day, userId, servlet);
 			File f = new File(fileName);
 			if (f.exists()) {
 				try {
@@ -76,8 +71,7 @@ public class ViewDataServlet extends HttpServlet {
 		}
 		
 		if (allInstances.isEmpty()) {
-			response.getWriter().write("No data found");
-			return;
+			return null;
 		}
 		
 		Instances allData = allInstances.get(0);
@@ -86,23 +80,103 @@ public class ViewDataServlet extends HttpServlet {
 		for (Instances i : allInstances) {
 			allData.addAll(i);
 		}
-		allData.sort(1);
+		//allData.sort(1);
 		
-		String locClustersParam = request.getParameter("k");
-		int numLocClusters = Integer.valueOf(locClustersParam);
+		return allData;
+	}
+	
+	private void viewData(Instances allData, PrintWriter writer) {
+		writer.write("total: " + allData.numInstances() + "\n");
+		for (Instance i : allData) {
+			writer.write(i.toString());
+			writer.write("\n");
+		}
+	}
+	
+	private String getFileJson(String userId, String filename) throws IOException {
+		String fullFilename = DataUploadServlet.constructUserFileName(userId, filename);
+		byte[] encoded = Files.readAllBytes(Paths.get(fullFilename));
+		String json = Charset.defaultCharset().decode(
+				ByteBuffer.wrap(encoded)).toString();
+		return json;
+	}
+
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		// Load cluster label mapping
+		/*
+		byte[] encoded = Files.readAllBytes(Paths.get(
+				DataUploadServlet.CLUSTER_LABELS_FILE));
+		String json = Charset.defaultCharset().decode(
+				ByteBuffer.wrap(encoded)).toString();
+		
+		Gson gson = new Gson();
+		Type collectionType = new TypeToken<List<EMCluster>>(){}.getType();
+		List<EMCluster> clusters = gson.fromJson(json, collectionType);
+		*/
+		String userId = request.getParameter("user");
+		Instances allData = loadAllData(userId, this);
+		if (allData == null) {
+			response.getWriter().write("no data");
+			return;
+		}
+		
+		String type = request.getParameter("type");
+		if (type == null) {
+			type = "view";
+		}
+		
+		if (type.equals("view")) {
+			viewData(allData, response.getWriter());
+			return;
+		} else if (type.equals("load")) {
+			try {
+				FilteredClusterer em = (FilteredClusterer) SerializationHelper.read(new FileInputStream(
+						DataUploadServlet.EM_MODEL_FILE));
+				
+				String clusterLabelsJson = getFileJson(userId, 
+						DataUploadServlet.CLUSTER_LABELS_FILE);
+				
+				Gson gson = new Gson();
+				Type collectionType = new TypeToken<List<EMCluster>>(){}.getType();
+				List<EMCluster> clusterToLabels = gson.fromJson(clusterLabelsJson, collectionType);
+				
+				SimpleKMeans locClusterer = (SimpleKMeans) SerializationHelper.read(new FileInputStream(
+						DataUploadServlet.constructUserFileName(userId,DataUploadServlet.LOC_CLUSTERER_FILE)));
+				
+				String locJson = getFileJson(userId, DataUploadServlet.LOC_DATA_FILE);
+				Type locCollectionType = new TypeToken<List<String>>(){}.getType();
+				List<String> topClusterList = gson.fromJson(locJson, locCollectionType);
+				Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
+						new int[] {2,3,4}, topClusterList, 
+						locClusterer.getAssignments());
+				allDataLoc.setClass(allDataLoc.attribute("ringer"));
+				
+				Remove removeClass = new Remove();
+				removeClass.setAttributeIndices("" + (allDataLoc.classIndex() + 1));
+				removeClass.setInputFormat(allDataLoc);
+				Instances unlabeledData = Filter.useFilter(allDataLoc, removeClass);
+				
+				
+				viewWithCluster(response.getWriter(), allDataLoc, unlabeledData, em, 
+						clusterToLabels);
+				return;
+			} catch (Exception e) {
+				e.printStackTrace();
+				response.getWriter().write("error loading models\n");
+				e.printStackTrace(response.getWriter());
+				return;
+			}
+		} 
+
+		int numLocClusters = Integer.valueOf(request.getParameter("k"));
+
 		
 		//Load classifier
 		try {
-			/*
-			FilteredClusterer em = (FilteredClusterer) SerializationHelper.read(new FileInputStream(
-					DataUploadServlet.EM_MODEL_FILE));
 
-			Remove remove = new Remove();
-			remove.setAttributeIndices("" + (allData.classIndex() + 1));
-			remove.setInputFormat(allData);
-
-			Instances unlabeledData = Filter.useFilter(allData, remove);
-			 */
 			Instances locData = CurrentStateUtil.extractLocationData(allData, false);
 			SimpleKMeans locClusterer = CurrentStateUtil.trainUnfilteredLocationClusterer(locData, 
 					numLocClusters);
@@ -123,8 +197,6 @@ public class ViewDataServlet extends HttpServlet {
 
 			Remove removeClass = new Remove();
 			removeClass.setAttributeIndices("" + (allDataLoc.classIndex() + 1));
-
-
 			removeClass.setInputFormat(allDataLoc);
 			Instances unlabeledData = Filter.useFilter(allDataLoc, removeClass);
 
@@ -136,23 +208,31 @@ public class ViewDataServlet extends HttpServlet {
 			List<EMCluster> clusterToLabels = EMCluster
 					.createClusterToLabelMap(allDataLoc, unlabeledData, em);
 
-			for (int i = 0; i < allDataLoc.numInstances(); i++) {
-				Instance target = unlabeledData.get(i);
-				double[] distrib = em.distributionForInstance(target);
-				int maxCluster = em.clusterInstance(target);
-				EMCluster cluster = clusterToLabels.get(maxCluster);
-				String label = cluster.getRingerLabel();
-				double probOfCluster = distrib[maxCluster];
-				double probOfLabel = cluster.getProbOfLabel();
-
-				response.getWriter().write(
-						allDataLoc.get(i) + "\n" +
-								"\t label: " + label + " cluster: " + maxCluster + 
-								" probOfCluster: " + probOfCluster
-								+ " probOfLabel: " + probOfLabel + "\n\n");
-			}
+			viewWithCluster(response.getWriter(), allDataLoc, unlabeledData, em,
+					clusterToLabels);
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	private void viewWithCluster(PrintWriter writer,
+			Instances allDataLoc, Instances unlabeledData,
+			FilteredClusterer em, List<EMCluster> clusterToLabels)
+			throws Exception, IOException {
+		for (int i = 0; i < allDataLoc.numInstances(); i++) {
+			Instance target = unlabeledData.get(i);
+			double[] distrib = em.distributionForInstance(target);
+			int maxCluster = em.clusterInstance(target);
+			EMCluster cluster = clusterToLabels.get(maxCluster);
+			String label = cluster.getRingerLabel();
+			double probOfCluster = distrib[maxCluster];
+			double probOfLabel = cluster.getProbOfLabel();
+
+			writer.write(
+					allDataLoc.get(i) + "\n" +
+							"\t label: " + label + " cluster: " + maxCluster + 
+							" probOfCluster: " + probOfCluster
+							+ " probOfLabel: " + probOfLabel + "\n\n");
 		}
 	}
 }

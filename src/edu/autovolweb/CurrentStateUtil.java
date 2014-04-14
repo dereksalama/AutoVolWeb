@@ -26,12 +26,12 @@ public class CurrentStateUtil {
 	
 	private static final int LOC_CLUSTERS = 20;
 
-	private static Collection<CurrentStateData> fromJson(String json) {
+	public static List<CurrentStateData> fromJson(String json) {
 		Gson gson = new Gson();
-		TypeToken<Set<CurrentStateData>> typeToken = 
-				new TypeToken<Set<CurrentStateData>>(){};
+		TypeToken<List<CurrentStateData>> typeToken = 
+				new TypeToken<List<CurrentStateData>>(){};
 		Type collectionType = typeToken.getType();
-		Set<CurrentStateData> data = gson.fromJson(json, collectionType);
+		List<CurrentStateData> data = gson.fromJson(json, collectionType);
 		return data;
 	}
 	
@@ -255,7 +255,7 @@ public class CurrentStateUtil {
 		return data;
 	}
 	
-	private static Instances createUnlabeledLocDataset(List<String> locClusters) {
+	public static Instances createUnlabeledLocDataset(List<String> locClusters) {
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		
 		attributes.add(new Attribute("day"));

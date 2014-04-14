@@ -9,8 +9,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +31,9 @@ import org.joda.time.DateTime;
 import weka.clusterers.EM;
 import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
 import weka.core.converters.ArffLoader;
@@ -46,13 +53,18 @@ public class DataUploadServlet extends HttpServlet {
 	
 	public static final int DATA_AGE = 14; //keep data for two weeks
 	
-	// TODO
+	//TODO
 	public static final int NUM_LOC_CLUSTERS = 20;
 	
 	public static final String CLUSTER_LABELS_FILE = "cluster_labels";
 	public static final String EM_MODEL_FILE = "em_model";
 	public static final String LOC_DATA_FILE = "loc_data";
 	public static final String LOC_CLUSTERER_FILE = "loc_model";
+	
+	public static final String AVG_CLUSTER_LABELS_FILE = "cluster_labels";
+	public static final String AVG_EM_MODEL_FILE = "em_model";
+	
+	private static final int NUM_VECTORS_TO_AVG = 4;
     
 	private ExecutorService executor;
 	
@@ -64,7 +76,7 @@ public class DataUploadServlet extends HttpServlet {
 	 @Override
 	 public void destroy() {
 	    	try {
-				executor.awaitTermination(5, TimeUnit.MINUTES);
+				executor.awaitTermination(1, TimeUnit.MINUTES);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -93,66 +105,15 @@ public class DataUploadServlet extends HttpServlet {
 	 }
 	 
 	 private class RetrainRunnable implements Runnable {
-		 private final String newData;
 		 private final String userId;
-		 public RetrainRunnable(String newData, String userId) {
-			this.newData = newData;
+		 public RetrainRunnable(String userId) {
 			this.userId = userId;
 		}
 		 
 		 @Override
 		 public void run() {
-			 // interpret incoming data
-			 Instances allData = CurrentStateUtil.convertCurrentStateData(newData);
 
-			 // write to today's file
-			 DateTime today = new DateTime();
-			 String newFileName = constructArffFileName(today, userId, DataUploadServlet.this);
-
-			 File newFile = new File(newFileName);
-			 if (newFile.exists()) {
-				 ArffLoader loader = new ArffLoader();
-				 try {
-					loader.setFile(newFile);
-					Instances oldData = loader.getDataSet();
-					allData.addAll(oldData);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			 }
-
-			 ArffSaver saver = new ArffSaver();
-			 saver.setInstances(allData);
-			 try {
-				saver.setFile(newFile);
-				saver.writeBatch();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			 // load previous data (up to how old?)
-			 for (int i = 1; i < DATA_AGE; i++) {
-				 DateTime day = today.minusDays(i);
-				 String fileName = constructArffFileName(day, userId, DataUploadServlet.this);
-				 File f = new File(fileName);
-				 if (f.exists()) {
-					 try {
-						 ArffLoader loader = new ArffLoader();
-						 loader.setFile(f);
-						 Instances moreData = loader.getDataSet();
-						 allData.addAll(moreData);
-					 } catch (FileNotFoundException e) {
-						 e.printStackTrace();
-					 } catch (IOException e) {
-						 e.printStackTrace();
-					 }
-				 } else {
-					 break; // have gone past oldest file
-				 }
-			 }
-
-
-
+			 Instances allData = ViewDataServlet.loadAllData(userId, DataUploadServlet.this);
 			 try {
 				 // Loc stuff
 				 Instances locData = CurrentStateUtil.extractLocationData(allData, false);
@@ -179,46 +140,112 @@ public class DataUploadServlet extends HttpServlet {
 				 String locJson = gson.toJson(topClusterList);
 				 locWriter.write(locJson);
 				 locWriter.close();
-
 				 
-				 // EM cluster
-				 EM unfilteredEM = new EM();
-				 Normalize normalizer = new Normalize();
-				 
-				 Remove removeClass = new Remove();
-				 removeClass.setAttributeIndices("" + (allDataLoc.classIndex() + 1));
-				 removeClass.setInputFormat(allDataLoc);
-				 Instances dataClassRemoved = Filter.useFilter(allDataLoc, removeClass);
-
-				 normalizer.setInputFormat(dataClassRemoved);
-				 FilteredClusterer em = new FilteredClusterer();
-				 em.setClusterer(unfilteredEM);
-				 em.setFilter(normalizer);
-				 em.buildClusterer(dataClassRemoved);
-				 List<EMCluster> clusterToLabels = EMCluster
-						 .createClusterToLabelMap(allDataLoc, dataClassRemoved, em);
-				 
-				 
-				 // save cluster labels
-				 File clusterToLabelsFile = new File(constructUserFileName(userId, CLUSTER_LABELS_FILE));
-				 BufferedWriter writer = new BufferedWriter(
-						 new FileWriter(clusterToLabelsFile, false)); // overwrite
-				 
-
-				 String json = gson.toJson(clusterToLabels);
-				 writer.write(json);
-				 writer.close();
-				 
-				 // save EM model
-				 SerializationHelper.write(new FileOutputStream(
-						 constructUserFileName(userId, EM_MODEL_FILE), 
-						 false), em);
+				 buildStandardModel(allDataLoc, CLUSTER_LABELS_FILE, EM_MODEL_FILE);
+				 buildAvgModel(allDataLoc);
 				 
 			 } catch (Exception e) {
 				 e.printStackTrace();
 			 }
 		 }
+
+		private void buildStandardModel(Instances allDataLoc, String clustersFile, String modelFile)
+				throws Exception, IOException, FileNotFoundException {
+			 Remove removeClass = new Remove();
+			 removeClass.setAttributeIndices("" + (allDataLoc.classIndex() + 1));
+			 removeClass.setInputFormat(allDataLoc);
+			 Instances dataClassRemoved = Filter.useFilter(allDataLoc, removeClass);
+			 
+			 
+			// EM cluster
+			 EM unfilteredEM = new EM();
+			 Normalize normalizer = new Normalize();
+			 
+			 normalizer.setInputFormat(dataClassRemoved);
+			 FilteredClusterer em = new FilteredClusterer();
+			 em.setClusterer(unfilteredEM);
+			 em.setFilter(normalizer);
+			 em.buildClusterer(dataClassRemoved);
+			 List<EMCluster> clusterToLabels = EMCluster
+					 .createClusterToLabelMap(allDataLoc, dataClassRemoved, em);
+			 
+			 
+			 // save cluster labels
+			 File clusterToLabelsFile = new File(constructUserFileName(userId, clustersFile));
+			 BufferedWriter writer = new BufferedWriter(
+					 new FileWriter(clusterToLabelsFile, false)); // overwrite
+			 
+			 Gson gson = new Gson();
+			 String json = gson.toJson(clusterToLabels);
+			 writer.write(json);
+			 writer.close();
+			 
+			 // save EM model
+			 SerializationHelper.write(new FileOutputStream(
+					 constructUserFileName(userId, modelFile), 
+					 false), em);
+		}
+		
+		private void buildAvgModel(Instances allDataLoc)
+				throws Exception, IOException, FileNotFoundException {
+			Instances avgData = new Instances(allDataLoc, allDataLoc.numInstances() / 
+					NUM_VECTORS_TO_AVG);
+			LinkedList<Instance> queue = new LinkedList<>();
+			for (Instance i : allDataLoc) {
+				queue.addFirst(i);
+				if (queue.size() > NUM_VECTORS_TO_AVG) {
+					queue.removeLast();
+				} else if (queue.size() == NUM_VECTORS_TO_AVG) {
+					Instance avg = avgInstances(queue, avgData);
+					avgData.add(avg);
+				}
+			}
+			
+			buildStandardModel(avgData, AVG_CLUSTER_LABELS_FILE, AVG_EM_MODEL_FILE);
+		}
 	 }
+	 
+	 public static Instance avgInstances(List<Instance> instances, Instances dataset) {
+		 Instance result = new DenseInstance(dataset.numAttributes());
+		 result.setDataset(dataset);
+		 
+		 for (int i = 0; i < dataset.numAttributes(); i++) {
+			 Attribute attr = dataset.attribute(i);
+			 if (attr.isNumeric()) {
+				 double sum = 0;
+				 for (Instance inst : instances) {
+					 sum += inst.value(attr);
+				 }
+				 
+				 result.setValue(attr, sum / instances.size());
+			 } else {
+				 Map<Double, Integer> countMap = new HashMap<>();
+				 for (Instance inst : instances) {
+					 Double val = inst.value(attr);
+					 Integer count = countMap.get(val);
+					 if (count == null) {
+						 countMap.put(val, 1);
+					 } else {
+						 countMap.put(val, count + 1);
+					 }
+				 }
+				 
+				 int maxCount = -1;
+				 double maxVal = 0;
+				 for (Entry<Double, Integer> e : countMap.entrySet()) {
+					 if (e.getValue() >= maxCount) {
+						 maxCount = e.getValue();
+						 maxVal = e.getKey();
+					 }
+				 }
+				 
+				 result.setValue(attr, maxVal);
+			 }
+		 }
+		 
+		 return result;
+	 }
+	 
 	
 
 	/**
@@ -246,9 +273,38 @@ public class DataUploadServlet extends HttpServlet {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+		
+		 // interpret incoming data
+		 Instances allData = CurrentStateUtil.convertCurrentStateData(incomingDataString);
+		 allData.sort(allData.attribute("time"));
+
+		 // write to today's file
+		 DateTime today = new DateTime();
+		 String newFileName = constructArffFileName(today, userId, DataUploadServlet.this);
+
+		 File newFile = new File(newFileName);
+		 if (newFile.exists()) {
+			 ArffLoader loader = new ArffLoader();
+			 try {
+				loader.setFile(newFile);
+				Instances oldData = loader.getDataSet();
+				allData.addAll(oldData);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		 }
+
+		 ArffSaver saver = new ArffSaver();
+		 saver.setInstances(allData);
+		 try {
+			saver.setFile(newFile);
+			saver.writeBatch();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		//TODO: put back after debugging
-		//executor.submit(new RetrainRunnable(incomingDataString));
-		new RetrainRunnable(incomingDataString, userId).run();
+		//executor.submit(new RetrainRunnable(userId));
+		//new RetrainRunnable(incomingDataString, userId).run();
 
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}
