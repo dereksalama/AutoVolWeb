@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,21 +46,42 @@ import weka.filters.unsupervised.attribute.Remove;
 public class ViewDataServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
+	static class TimeComparator implements Comparator<Instance> {
+
+		@Override
+		public int compare(Instance lhs, Instance rhs) {
+			int dayIndex = lhs.dataset().attribute("day").index();
+			int timeIndex =  lhs.dataset().attribute("time").index();
+			if (lhs.value(dayIndex) > rhs.value(dayIndex)) {
+				return -1;
+			} else if (lhs.value(dayIndex) < rhs.value(dayIndex)) {
+				return 1;
+			}
+			
+			if (lhs.value(timeIndex) > rhs.value(timeIndex)) {
+				return -1;
+			} else if (lhs.value(timeIndex) < rhs.value(timeIndex)) {
+				return 1;
+			}
+			
+			return 0;
+		}
+		
+	}
+	
 	public static Instances loadAllData(String userId, HttpServlet servlet) {
 		List<Instances> allInstances = new ArrayList<Instances>();
 		DateTime today = new DateTime();
-		// load previous data (up to how old?)
 		for (int i = 0; i < DataUploadServlet.DATA_AGE; i++) {
 			DateTime day = today.minusDays(i);
 			String fileName = DataUploadServlet.constructArffFileName(day, userId, servlet);
 			File f = new File(fileName);
 			if (f.exists()) {
 				try {
-					//BufferedReader reader = new BufferedReader(new FileReader(f));
-					//Instances moreData = new Instances(reader);
 					ArffLoader loader = new ArffLoader();
 					loader.setFile(f);
 					Instances moreData = loader.getDataSet();
+					Collections.sort(moreData, new TimeComparator());
 					allInstances.add(moreData);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -130,6 +153,26 @@ public class ViewDataServlet extends HttpServlet {
 		
 		if (type.equals("view")) {
 			viewData(allData, response.getWriter());
+			return;
+		} else if (type.equals("loc")) {
+			SimpleKMeans locClusterer;
+			try {
+				locClusterer = (SimpleKMeans) SerializationHelper.read(new FileInputStream(
+						DataUploadServlet.constructUserFileName(userId,DataUploadServlet.LOC_CLUSTERER_FILE)));
+				
+				String locJson = getFileJson(userId, DataUploadServlet.LOC_DATA_FILE);
+				Type locCollectionType = new TypeToken<List<String>>(){}.getType();
+				
+				Gson gson = new Gson();
+				List<String> topClusterList = gson.fromJson(locJson, locCollectionType);
+				Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
+						new int[] {2,3,4}, topClusterList, 
+						locClusterer.getAssignments());
+				allDataLoc.setClass(allDataLoc.attribute("ringer"));
+				viewData(allDataLoc, response.getWriter());
+			} catch (Exception e) {
+				e.printStackTrace(response.getWriter());
+			}
 			return;
 		} else if (type.equals("load")) {
 			try {

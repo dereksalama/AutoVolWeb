@@ -54,7 +54,7 @@ public class DataUploadServlet extends HttpServlet {
 	public static final int DATA_AGE = 14; //keep data for two weeks
 	
 	//TODO
-	public static final int NUM_LOC_CLUSTERS = 20;
+	public static final int NUM_LOC_CLUSTERS = 1;
 	
 	public static final String CLUSTER_LABELS_FILE = "cluster_labels";
 	public static final String EM_MODEL_FILE = "em_model";
@@ -115,31 +115,7 @@ public class DataUploadServlet extends HttpServlet {
 
 			 Instances allData = ViewDataServlet.loadAllData(userId, DataUploadServlet.this);
 			 try {
-				 // Loc stuff
-				 Instances locData = CurrentStateUtil.extractLocationData(allData, false);
-				 SimpleKMeans locClusterer = CurrentStateUtil.trainUnfilteredLocationClusterer(locData, 
-						 NUM_LOC_CLUSTERS);
-				 List<String> topClusterList = CurrentStateUtil.findTopClusters(locClusterer, 
-						 allData.numInstances());
-				 Set<String> locClusters = new HashSet<>(topClusterList.size());
-				 locClusters.addAll(topClusterList);
-
-				 Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
-						 new int[] {2,3,4}, topClusterList, 
-						 locClusterer.getAssignments());
-				 allDataLoc.setClass(allDataLoc.attribute("ringer"));
-				 SerializationHelper.write(new FileOutputStream(
-						 constructUserFileName(userId, LOC_CLUSTERER_FILE), false), 
-						 locClusterer);
-
-				 Gson gson = new Gson();
-				 File locClustersFile = new File(
-						 constructUserFileName(userId, LOC_DATA_FILE));
-				 BufferedWriter locWriter = new BufferedWriter(
-						 new FileWriter(locClustersFile, false));
-				 String locJson = gson.toJson(topClusterList);
-				 locWriter.write(locJson);
-				 locWriter.close();
+				 Instances allDataLoc = locClassify(allData, userId);
 				 
 				 buildStandardModel(allDataLoc, CLUSTER_LABELS_FILE, EM_MODEL_FILE);
 				 buildAvgModel(allDataLoc);
@@ -246,6 +222,39 @@ public class DataUploadServlet extends HttpServlet {
 		 return result;
 	 }
 	 
+	 public static Instances locClassify(Instances allData, String userId) throws Exception {
+		 Instances locData = CurrentStateUtil.extractLocationData(allData, false);
+		 Normalize n = new Normalize();
+		 n.setInputFormat(locData);
+		 Instances normLocData = Filter.useFilter(locData, n);
+		 
+		 FilteredClusterer locClusterer = CurrentStateUtil.trainLocationClusterer(normLocData, 
+				 NUM_LOC_CLUSTERS);
+		 List<String> topClusterList = CurrentStateUtil.findTopClusters((SimpleKMeans) locClusterer.getClusterer(), 
+				 allData.numInstances());
+		 Set<String> locClusters = new HashSet<>(topClusterList.size());
+		 locClusters.addAll(topClusterList);
+
+		 Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
+				 new int[] {2,3,4}, topClusterList, 
+				 ((SimpleKMeans) locClusterer.getClusterer()).getAssignments());
+		 allDataLoc.setClass(allDataLoc.attribute("ringer"));
+		 SerializationHelper.write(new FileOutputStream(
+				 constructUserFileName(userId, LOC_CLUSTERER_FILE), false), 
+				 locClusterer);
+
+		 Gson gson = new Gson();
+		 File locClustersFile = new File(
+				 constructUserFileName(userId, LOC_DATA_FILE));
+		 BufferedWriter locWriter = new BufferedWriter(
+				 new FileWriter(locClustersFile, false));
+		 String locJson = gson.toJson(topClusterList);
+		 locWriter.write(locJson);
+		 locWriter.close();
+		 
+		 return allDataLoc;
+	 }
+	 
 	
 
 	/**
@@ -300,6 +309,13 @@ public class DataUploadServlet extends HttpServlet {
 			saver.setFile(newFile);
 			saver.writeBatch();
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		 
+		Instances data = ViewDataServlet.loadAllData(userId, this);
+		try {
+			locClassify(data, userId);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		//TODO: put back after debugging

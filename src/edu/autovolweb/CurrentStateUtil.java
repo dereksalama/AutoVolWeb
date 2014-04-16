@@ -100,6 +100,22 @@ public class CurrentStateUtil {
 		return i;
 	}
 	
+	public static Instance toLocInstance(CurrentStateData state, String locCluster,
+			List<String> locClusters) {
+		Instances dataset = createLocDataset(locClusters);
+		return toLocInstance(state, locCluster, dataset);
+	}
+	
+	private static Instance toLocInstance(CurrentStateData state, String locCluster,
+			Instances dataset) {
+		Instance i = toUnlabeledLocInstance(state, locCluster, dataset);
+		i.setValue(dataset.attribute("ringer"), state.getRinger());
+		
+		return i;
+	}
+	
+	
+	
 	private static Instance toInstance(CurrentStateData state, Instances dataset) {
 		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
 		i.setDataset(dataset);
@@ -297,6 +313,55 @@ public class CurrentStateUtil {
 		return data;
 	}
 	
+	private static Instances createLocDataset(List<String> locClusters) {
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+		
+		attributes.add(new Attribute("day"));
+		attributes.add(new Attribute("time"));
+		
+		attributes.add(new Attribute("light"));
+		attributes.add(new Attribute("distance"));
+		attributes.add(new Attribute("wifi_count"));
+		
+		ArrayList<String> chargingValues = new ArrayList<String>();
+		chargingValues.add("true");
+		chargingValues.add("false");
+		attributes.add(new Attribute("charging", chargingValues));
+		
+		ArrayList<String> activityValues = new ArrayList<String>();
+		activityValues.add("activity_vehicle");
+		activityValues.add("activity_bike");
+		activityValues.add("activity_foot");
+		activityValues.add("activity_still");
+		activityValues.add("activity_unknown");
+		activityValues.add("activity_tilting");
+		attributes.add(new Attribute("activity_type", activityValues));
+		
+		attributes.add(new Attribute("activity_confidence"));
+		
+		ArrayList<String> screenOnValues = new ArrayList<>();
+		screenOnValues.add("true");
+		screenOnValues.add("false");
+		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
+		attributes.add(screenOnAttr);
+		
+		attributes.add(new Attribute("screen_last_on"));
+		attributes.add(new Attribute("audio_mag"));
+		
+		attributes.add(new Attribute("loc", locClusters));
+		
+		ArrayList<String> ringerValues = new ArrayList<String>();
+		ringerValues.add("silent");
+		ringerValues.add("vibrate");
+		ringerValues.add("normal");
+		Attribute ringerAttr = new Attribute("ringer", ringerValues);
+		attributes.add(ringerAttr);
+		Instances data = new Instances("Training", attributes, 0);
+		data.setClass(data.attribute("ringer"));
+		
+		return data;
+	}
+	
 	public static Instances convertCurrentStateData(String json) {
 		Instances data = createDataset();
 		
@@ -344,11 +409,11 @@ public class CurrentStateUtil {
 		return locData;
 	}
 	
-	public static FilteredClusterer trainLocationClusterer(Instances locData) throws Exception {
+	public static FilteredClusterer trainLocationClusterer(Instances locData, int numClusters) throws Exception {
 		SimpleKMeans km = new SimpleKMeans();
 		km.setInitializeUsingKMeansPlusPlusMethod(true);
 		km.setPreserveInstancesOrder(true);
-		km.setNumClusters(LOC_CLUSTERS); // ?
+		km.setNumClusters(numClusters); // ?
 		
 		FilteredClusterer clusterer = new FilteredClusterer();
 		Normalize normalizer = new Normalize();
