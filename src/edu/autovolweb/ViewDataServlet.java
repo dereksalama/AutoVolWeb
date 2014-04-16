@@ -155,9 +155,9 @@ public class ViewDataServlet extends HttpServlet {
 			viewData(allData, response.getWriter());
 			return;
 		} else if (type.equals("loc")) {
-			SimpleKMeans locClusterer;
+			FilteredClusterer locClusterer;
 			try {
-				locClusterer = (SimpleKMeans) SerializationHelper.read(new FileInputStream(
+				locClusterer = (FilteredClusterer) SerializationHelper.read(new FileInputStream(
 						DataUploadServlet.constructUserFileName(userId,DataUploadServlet.LOC_CLUSTERER_FILE)));
 				
 				String locJson = getFileJson(userId, DataUploadServlet.LOC_DATA_FILE);
@@ -167,7 +167,7 @@ public class ViewDataServlet extends HttpServlet {
 				List<String> topClusterList = gson.fromJson(locJson, locCollectionType);
 				Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
 						new int[] {2,3,4}, topClusterList, 
-						locClusterer.getAssignments());
+						((SimpleKMeans) locClusterer.getClusterer()).getAssignments());
 				allDataLoc.setClass(allDataLoc.attribute("ringer"));
 				viewData(allDataLoc, response.getWriter());
 			} catch (Exception e) {

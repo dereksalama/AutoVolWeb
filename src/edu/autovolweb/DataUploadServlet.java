@@ -54,7 +54,7 @@ public class DataUploadServlet extends HttpServlet {
 	public static final int DATA_AGE = 14; //keep data for two weeks
 	
 	//TODO
-	public static final int NUM_LOC_CLUSTERS = 1;
+	public static final int NUM_LOC_CLUSTERS = 20;
 	
 	public static final String CLUSTER_LABELS_FILE = "cluster_labels";
 	public static final String EM_MODEL_FILE = "em_model";

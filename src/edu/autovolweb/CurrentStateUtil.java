@@ -25,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 public class CurrentStateUtil {
 	
 	private static final int LOC_CLUSTERS = 20;
+	private static final double LOC_THRESHOLD = 0.80;
 
 	public static List<CurrentStateData> fromJson(String json) {
 		Gson gson = new Gson();
@@ -448,7 +449,7 @@ public class CurrentStateUtil {
 		int include = 0;
 		for (int i = sortedSizes.length - 1; i >= 0; i--) {
 			sum += sortedSizes[i];
-			if (((double) sum / totalCount) >= .90 ) {
+			if (((double) sum / totalCount) >= LOC_THRESHOLD ) {
 				include = i;
 				break;
 			}
