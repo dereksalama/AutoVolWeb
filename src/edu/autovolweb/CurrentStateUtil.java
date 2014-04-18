@@ -83,7 +83,7 @@ public class CurrentStateUtil {
 		Instance i = new DenseInstance(dataset.numAttributes());
 		i.setDataset(dataset);
 		
-		i.setValue(dataset.attribute("day"), state.getDay());
+		i.setValue(dataset.attribute("day"), getDay(state));
 		i.setValue(dataset.attribute("time"), state.getTime());
 
 		i.setValue(dataset.attribute("light"), state.getLight());
@@ -99,6 +99,13 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
 		i.setValue(dataset.attribute("loc"), locCluster);
 		return i;
+	}
+	
+	private static final String[] DAYS_OF_WEEK = {"sun", "mon", "tues", "weds", "thurs", "fri", "sat"};
+	
+	private static String getDay(CurrentStateData state) {
+		int dayNum = (int) state.getDay();
+		return DAYS_OF_WEEK[dayNum - 1];
 	}
 	
 	public static Instance toLocInstance(CurrentStateData state, String locCluster,
@@ -118,30 +125,9 @@ public class CurrentStateUtil {
 	
 	
 	private static Instance toInstance(CurrentStateData state, Instances dataset) {
-		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
-		i.setDataset(dataset);
-		
-		i.setValue(dataset.attribute("day"), state.getDay());
-		i.setValue(dataset.attribute("time"), state.getTime());
-		i.setValue(dataset.attribute("lat"), state.getLat());
-		i.setValue(dataset.attribute("lon"), state.getLon());
-		i.setValue(dataset.attribute("loc_provider"), state.getLocProvider());
-		i.setValue(dataset.attribute("light"), state.getLight());
-		i.setValue(dataset.attribute("distance"), state.getDistance());
-		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
-		i.setValue(dataset.attribute("charging"), state.getCharging());
-		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
-		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
-		
-		
-		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
-		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
-		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
-		
-		
+		Instance i = toUnlabeledInstance(state, dataset);
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
 
-		
 		return i;
 	}
 	
@@ -149,7 +135,7 @@ public class CurrentStateUtil {
 		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS - 1);
 		i.setDataset(dataset);
 		
-		i.setValue(dataset.attribute("day"), state.getDay());
+		i.setValue(dataset.attribute("day"), getDay(state));
 		i.setValue(dataset.attribute("time"), state.getTime());
 		i.setValue(dataset.attribute("lat"), state.getLat());
 		i.setValue(dataset.attribute("lon"), state.getLon());
@@ -169,47 +155,7 @@ public class CurrentStateUtil {
 	}
 	
 	private static Instances createDataset() {
-		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-		
-		attributes.add(new Attribute("day"));
-		attributes.add(new Attribute("time"));
-		attributes.add(new Attribute("lat"));
-		attributes.add(new Attribute("lon"));
-		
-		ArrayList<String> locProviderValues = new ArrayList<String>();
-		locProviderValues.add("gps");
-		locProviderValues.add("network");
-		locProviderValues.add("fused");
-		attributes.add(new Attribute("loc_provider", locProviderValues));
-		
-		attributes.add(new Attribute("light"));
-		attributes.add(new Attribute("distance"));
-		attributes.add(new Attribute("wifi_count"));
-		
-		ArrayList<String> chargingValues = new ArrayList<String>();
-		chargingValues.add("true");
-		chargingValues.add("false");
-		attributes.add(new Attribute("charging", chargingValues));
-		
-		ArrayList<String> activityValues = new ArrayList<String>();
-		activityValues.add("activity_vehicle");
-		activityValues.add("activity_bike");
-		activityValues.add("activity_foot");
-		activityValues.add("activity_still");
-		activityValues.add("activity_unknown");
-		activityValues.add("activity_tilting");
-		attributes.add(new Attribute("activity_type", activityValues));
-		
-		attributes.add(new Attribute("activity_confidence"));
-		
-		ArrayList<String> screenOnValues = new ArrayList<>();
-		screenOnValues.add("true");
-		screenOnValues.add("false");
-		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
-		attributes.add(screenOnAttr);
-		
-		attributes.add(new Attribute("screen_last_on"));
-		attributes.add(new Attribute("audio_mag"));
+		ArrayList<Attribute> attributes = unlabeledAttributes();
 		
 		ArrayList<String> ringerValues = new ArrayList<String>();
 		ringerValues.add("silent");
@@ -225,9 +171,19 @@ public class CurrentStateUtil {
 	}
 	
 	private static Instances createUnlabeledDataset() {
+		ArrayList<Attribute> attributes = unlabeledAttributes();
+		
+		Instances data = new Instances("Training", attributes, 0);
+		
+		return data;
+	}
+
+	private static ArrayList<Attribute> unlabeledAttributes() {
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		
-		attributes.add(new Attribute("day"));
+		ArrayList<String> dayValues = new ArrayList<String>(Arrays.asList(DAYS_OF_WEEK));
+		attributes.add(new Attribute("day", dayValues));
+		
 		attributes.add(new Attribute("time"));
 		attributes.add(new Attribute("lat"));
 		attributes.add(new Attribute("lon"));
@@ -266,16 +222,14 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("screen_last_on"));
 		attributes.add(new Attribute("audio_mag"));
-		
-		Instances data = new Instances("Training", attributes, 0);
-		
-		return data;
+		return attributes;
 	}
 	
 	public static Instances createUnlabeledLocDataset(List<String> locClusters) {
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		
-		attributes.add(new Attribute("day"));
+		ArrayList<String> dayValues = new ArrayList<String>(Arrays.asList(DAYS_OF_WEEK));
+		attributes.add(new Attribute("day", dayValues));
 		attributes.add(new Attribute("time"));
 		
 		attributes.add(new Attribute("light"));
@@ -317,7 +271,8 @@ public class CurrentStateUtil {
 	private static Instances createLocDataset(List<String> locClusters) {
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		
-		attributes.add(new Attribute("day"));
+		ArrayList<String> dayValues = new ArrayList<String>(Arrays.asList(DAYS_OF_WEEK));
+		attributes.add(new Attribute("day", dayValues));
 		attributes.add(new Attribute("time"));
 		
 		attributes.add(new Attribute("light"));

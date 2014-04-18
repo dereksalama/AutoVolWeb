@@ -54,7 +54,7 @@ public class DataUploadServlet extends HttpServlet {
 	public static final int DATA_AGE = 14; //keep data for two weeks
 	
 	//TODO
-	public static final int NUM_LOC_CLUSTERS = 20;
+	public static final int NUM_LOC_CLUSTERS = 5;
 	
 	public static final String CLUSTER_LABELS_FILE = "cluster_labels";
 	public static final String EM_MODEL_FILE = "em_model";
@@ -84,7 +84,7 @@ public class DataUploadServlet extends HttpServlet {
 	 
 	 public static String constructArffFileName(DateTime day, String user, HttpServlet servlet) {
 		 String safeNameConv = convertUser(user);
-		 String filename = safeNameConv + "_" + day.getDayOfMonth() + "_" +
+		 String filename = safeNameConv + "_1_" + day.getDayOfMonth() + "_" +
 				 day.getMonthOfYear() + "_" + day.getYear(); 
 		 return filename;
 	 }
@@ -283,45 +283,50 @@ public class DataUploadServlet extends HttpServlet {
 			return;
 		}
 		
-		 // interpret incoming data
-		 Instances allData = CurrentStateUtil.convertCurrentStateData(incomingDataString);
-		 allData.sort(allData.attribute("time"));
+		
+		// interpret incoming data
 
-		 // write to today's file
-		 DateTime today = new DateTime();
-		 String newFileName = constructArffFileName(today, userId, DataUploadServlet.this);
+		Instances allData = CurrentStateUtil.convertCurrentStateData(incomingDataString);
+		allData.sort(allData.attribute("time"));
 
-		 File newFile = new File(newFileName);
-		 if (newFile.exists()) {
-			 ArffLoader loader = new ArffLoader();
-			 try {
+		// write to today's file
+		DateTime today = new DateTime();
+		String newFileName = constructArffFileName(today, userId, DataUploadServlet.this);
+
+		File newFile = new File(newFileName);
+		if (newFile.exists()) {
+			ArffLoader loader = new ArffLoader();
+			try {
 				loader.setFile(newFile);
 				Instances oldData = loader.getDataSet();
 				allData.addAll(oldData);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		 }
+		}
 
-		 ArffSaver saver = new ArffSaver();
-		 saver.setInstances(allData);
-		 try {
+		ArffSaver saver = new ArffSaver();
+		saver.setInstances(allData);
+		try {
 			saver.setFile(newFile);
 			saver.writeBatch();
 		} catch (IOException e) {
 			e.printStackTrace();
+			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unable to write to file");
 		}
-		 
+
 		Instances data = ViewDataServlet.loadAllData(userId, this);
 		try {
 			locClassify(data, userId);
 		} catch (Exception e) {
 			e.printStackTrace();
+			//response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error doing loc cluster");
 		}
 		//TODO: put back after debugging
 		//executor.submit(new RetrainRunnable(userId));
 		//new RetrainRunnable(incomingDataString, userId).run();
 
+		
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}
 
