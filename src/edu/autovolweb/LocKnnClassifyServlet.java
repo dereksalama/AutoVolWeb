@@ -16,6 +16,7 @@ import javax.servlet.annotation.WebServlet;
 
 import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
+import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
@@ -96,7 +97,10 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 	
 	@Override
 	protected String prepareOutput(JsonObject json, Instance target) {
-		json.addProperty("loc", target.value(target.dataset().attribute("loc")));
+		Attribute locAttr = target.dataset().attribute("loc");
+		double locVal = target.value(locAttr);
+		String locCluster = locAttr.value((int) locVal);
+		json.addProperty("loc", locCluster);
 		return json.toString();
 	}
 	

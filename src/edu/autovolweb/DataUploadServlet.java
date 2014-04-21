@@ -54,7 +54,7 @@ public class DataUploadServlet extends HttpServlet {
 	public static final int DATA_AGE = 14; //keep data for two weeks
 	
 	//TODO
-	public static final int NUM_LOC_CLUSTERS = 5;
+	public static final int NUM_LOC_CLUSTERS = 20;
 	
 	public static final String CLUSTER_LABELS_FILE = "cluster_labels";
 	public static final String EM_MODEL_FILE = "em_model";
@@ -84,7 +84,7 @@ public class DataUploadServlet extends HttpServlet {
 	 
 	 public static String constructArffFileName(DateTime day, String user, HttpServlet servlet) {
 		 String safeNameConv = convertUser(user);
-		 String filename = safeNameConv + "_1_" + day.getDayOfMonth() + "_" +
+		 String filename = safeNameConv + "_2_" + day.getDayOfMonth() + "_" +
 				 day.getMonthOfYear() + "_" + day.getYear(); 
 		 return filename;
 	 }
@@ -325,6 +325,8 @@ public class DataUploadServlet extends HttpServlet {
 		//TODO: put back after debugging
 		//executor.submit(new RetrainRunnable(userId));
 		//new RetrainRunnable(incomingDataString, userId).run();
+		
+		executor.submit(new EmLocKnnClassifyServlet.ClusterLocations(data, userId));
 
 		
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);

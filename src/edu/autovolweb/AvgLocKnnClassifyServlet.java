@@ -24,7 +24,12 @@ public class AvgLocKnnClassifyServlet extends LocKnnClassifyServlet {
 		Instances avgData = new Instances(allDataLoc, allDataLoc.numInstances() / 
 				AvgKnnClassifyServlet.NUM_VECTORS_TO_AVG);
 		LinkedList<Instance> queue = new LinkedList<>();
+		double currentDay = 0;
 		for (Instance i : allDataLoc) {
+			if (i.value(allDataLoc.attribute("day")) != currentDay) { // moving to next day
+				queue.clear();
+				currentDay = i.value(allDataLoc.attribute("day"));
+			}
 			queue.addFirst(i);
 			if (queue.size() > AvgKnnClassifyServlet.NUM_VECTORS_TO_AVG) {
 				queue.removeLast();

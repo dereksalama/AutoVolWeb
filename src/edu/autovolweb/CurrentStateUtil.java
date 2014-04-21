@@ -54,6 +54,69 @@ public class CurrentStateUtil {
 		return toUnlabeledLocInstance(state, locCluster, createUnlabeledLocDataset(allLocClusters));
 	}
 	
+	public static Instance toEmLocInstance(CurrentStateData state, String locCluster,
+			double clusterProb,
+			List<String> allLocClusters) {
+		Instances dataset = createEmLocDataset(allLocClusters);
+		Instance i = toNoLocUnlabeledInstance(state, dataset);
+		i.setValue(dataset.attribute("loc"), locCluster);
+		i.setValue(dataset.attribute("prob_loc"), clusterProb);
+		i.setValue(dataset.attribute("ringer"), state.getRinger());
+		
+		return i;
+	}
+	
+	private static Instances createEmLocDataset(List<String> locClusters) {
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+		
+		ArrayList<String> dayValues = new ArrayList<String>(Arrays.asList(DAYS_OF_WEEK));
+		attributes.add(new Attribute("day", dayValues));
+		attributes.add(new Attribute("time"));
+		
+		attributes.add(new Attribute("light"));
+		attributes.add(new Attribute("distance"));
+		attributes.add(new Attribute("wifi_count"));
+		
+		ArrayList<String> chargingValues = new ArrayList<String>();
+		chargingValues.add("true");
+		chargingValues.add("false");
+		attributes.add(new Attribute("charging", chargingValues));
+		
+		ArrayList<String> activityValues = new ArrayList<String>();
+		activityValues.add("activity_vehicle");
+		activityValues.add("activity_bike");
+		activityValues.add("activity_foot");
+		activityValues.add("activity_still");
+		activityValues.add("activity_unknown");
+		activityValues.add("activity_tilting");
+		attributes.add(new Attribute("activity_type", activityValues));
+		
+		attributes.add(new Attribute("activity_confidence"));
+		
+		ArrayList<String> screenOnValues = new ArrayList<>();
+		screenOnValues.add("true");
+		screenOnValues.add("false");
+		Attribute screenOnAttr = new Attribute("screen_on", screenOnValues);
+		attributes.add(screenOnAttr);
+		
+		attributes.add(new Attribute("screen_last_on"));
+		attributes.add(new Attribute("audio_mag"));
+		
+		attributes.add(new Attribute("loc", locClusters));
+		attributes.add(new Attribute("prob_loc"));
+		
+		ArrayList<String> ringerValues = new ArrayList<String>();
+		ringerValues.add("silent");
+		ringerValues.add("vibrate");
+		ringerValues.add("normal");
+		Attribute ringerAttr = new Attribute("ringer", ringerValues);
+		attributes.add(ringerAttr);
+		
+		Instances data = new Instances("Training", attributes, 0);
+		data.setClass(ringerAttr);
+		return data;
+	}
+	
 	public static Instance extractLocInstance(CurrentStateData state) {
 		Instance locInstance = new DenseInstance(3);
 		
@@ -80,6 +143,13 @@ public class CurrentStateUtil {
 	
 	private static Instance toUnlabeledLocInstance(CurrentStateData state, String locCluster,
 			Instances dataset) {
+		Instance i = toNoLocUnlabeledInstance(state, dataset);
+		i.setValue(dataset.attribute("loc"), locCluster);
+		return i;
+	}
+
+	private static Instance toNoLocUnlabeledInstance(CurrentStateData state,
+			Instances dataset) {
 		Instance i = new DenseInstance(dataset.numAttributes());
 		i.setDataset(dataset);
 		
@@ -97,7 +167,6 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
 		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
 		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
-		i.setValue(dataset.attribute("loc"), locCluster);
 		return i;
 	}
 	
@@ -125,7 +194,9 @@ public class CurrentStateUtil {
 	
 	
 	private static Instance toInstance(CurrentStateData state, Instances dataset) {
-		Instance i = toUnlabeledInstance(state, dataset);
+		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
+		i.setDataset(dataset);
+		setUnlabeledValues(state, dataset, i);
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
 
 		return i;
@@ -135,6 +206,13 @@ public class CurrentStateUtil {
 		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS - 1);
 		i.setDataset(dataset);
 		
+		setUnlabeledValues(state, dataset, i);
+		
+		return i;
+	}
+
+	private static void setUnlabeledValues(CurrentStateData state,
+			Instances dataset, Instance i) {
 		i.setValue(dataset.attribute("day"), getDay(state));
 		i.setValue(dataset.attribute("time"), state.getTime());
 		i.setValue(dataset.attribute("lat"), state.getLat());
@@ -150,8 +228,6 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
 		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());
 		i.setValue(dataset.attribute("audio_mag"), state.getAudioMag());
-		
-		return i;
 	}
 	
 	private static Instances createDataset() {

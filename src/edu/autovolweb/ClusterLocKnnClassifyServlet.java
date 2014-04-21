@@ -72,6 +72,10 @@ public class ClusterLocKnnClassifyServlet extends LocKnnClassifyServlet {
 		
 		int[] assignments = ((SimpleKMeans) clusterer.getClusterer()).getAssignments();
 		for (int i = 0; i < unlabeledData.numInstances() - NUM_VECTORS_TO_CLUSTER; i++) {
+			if (allDataLoc.instance(i).value(allDataLoc.attribute("day")) != 
+					allDataLoc.instance(i + NUM_VECTORS_TO_CLUSTER - 1).value(allDataLoc.attribute("day"))) {
+				continue; // skip until all from same day
+			}
 			Instance inst = new DenseInstance(NUM_VECTORS_TO_CLUSTER + 1);
 			inst.setDataset(data);
 			int[] classCounts = new int[data.classAttribute().numValues()];
