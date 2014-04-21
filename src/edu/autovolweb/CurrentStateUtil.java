@@ -118,25 +118,26 @@ public class CurrentStateUtil {
 	}
 	
 	public static Instance extractLocInstance(CurrentStateData state) {
-		Instance locInstance = new DenseInstance(3);
+		Instance locInstance = new DenseInstance(2);
 		
 		ArrayList<Attribute> locAttr = new ArrayList<>();
 		locAttr.add(new Attribute("lat"));
 		locAttr.add(new Attribute("lon"));
 		
+		/*
 		ArrayList<String> locProviderValues = new ArrayList<String>();
 		locProviderValues.add("gps");
 		locProviderValues.add("network");
 		locProviderValues.add("fused");
 		locAttr.add(new Attribute("loc_provider", locProviderValues));
-		
+		*/
 		
 		Instances locDataset = new Instances("loc_data", locAttr, 0);
 		locInstance.setDataset(locDataset);
 		
 		locInstance.setValue(locDataset.attribute("lat"), state.getLat());
 		locInstance.setValue(locDataset.attribute("lon"), state.getLon());
-		locInstance.setValue(locDataset.attribute("loc_provider"), state.getLocProvider());
+		//locInstance.setValue(locDataset.attribute("loc_provider"), state.getLocProvider());
 		
 		return locInstance;
 	}
@@ -410,6 +411,7 @@ public class CurrentStateUtil {
 		attributes.add(new Attribute("lat"));
 		attributes.add(new Attribute("lon"));
 		
+		/*
 		ArrayList<String> locProviderValues = new ArrayList<String>();
 		if (oldFormat) {
 			locProviderValues.add("0.0");
@@ -421,10 +423,13 @@ public class CurrentStateUtil {
 		}
 		
 		attributes.add(new Attribute("loc_provider", locProviderValues));
+		*/
 		Instances locData = new Instances("LocData", attributes, input.numInstances());
 		
+		
 		for (Instance orig : input) {
-			Instance loc = new DenseInstance(3);
+			//Instance loc = new DenseInstance(3);
+			Instance loc = new DenseInstance(2);
 			loc.setDataset(locData);
 			
 			loc.setValue(locData.attribute("lat"), orig.value(input.attribute("lat")));
@@ -433,7 +438,7 @@ public class CurrentStateUtil {
 			} else {
 				loc.setValue(locData.attribute("lon"), orig.value(input.attribute("lon")));
 			}
-			loc.setValue(locData.attribute("loc_provider"), orig.value(input.attribute("loc_provider")));
+			//loc.setValue(locData.attribute("loc_provider"), orig.value(input.attribute("loc_provider")));
 			
 			locData.add(loc);
 		}
@@ -460,7 +465,7 @@ public class CurrentStateUtil {
 	
 	public static SimpleKMeans trainUnfilteredLocationClusterer(Instances locData, int numClusters) throws Exception {
 		SimpleKMeans km = new SimpleKMeans();
-		km.setInitializeUsingKMeansPlusPlusMethod(true);
+		//km.setInitializeUsingKMeansPlusPlusMethod(true);
 		km.setPreserveInstancesOrder(true);
 		km.setNumClusters(numClusters); // ?
 	

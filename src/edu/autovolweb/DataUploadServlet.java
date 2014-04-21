@@ -224,20 +224,17 @@ public class DataUploadServlet extends HttpServlet {
 	 
 	 public static Instances locClassify(Instances allData, String userId) throws Exception {
 		 Instances locData = CurrentStateUtil.extractLocationData(allData, false);
-		 Normalize n = new Normalize();
-		 n.setInputFormat(locData);
-		 Instances normLocData = Filter.useFilter(locData, n);
 		 
-		 FilteredClusterer locClusterer = CurrentStateUtil.trainLocationClusterer(normLocData, 
+		 SimpleKMeans locClusterer = CurrentStateUtil.trainUnfilteredLocationClusterer(locData, 
 				 NUM_LOC_CLUSTERS);
-		 List<String> topClusterList = CurrentStateUtil.findTopClusters((SimpleKMeans) locClusterer.getClusterer(), 
+		 List<String> topClusterList = CurrentStateUtil.findTopClusters(locClusterer, 
 				 allData.numInstances());
 		 Set<String> locClusters = new HashSet<>(topClusterList.size());
 		 locClusters.addAll(topClusterList);
 
 		 Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
 				 new int[] {2,3,4}, topClusterList, 
-				 ((SimpleKMeans) locClusterer.getClusterer()).getAssignments());
+				locClusterer.getAssignments());
 		 allDataLoc.setClass(allDataLoc.attribute("ringer"));
 		 SerializationHelper.write(new FileOutputStream(
 				 constructUserFileName(userId, LOC_CLUSTERER_FILE), false), 

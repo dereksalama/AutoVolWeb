@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 
-import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
 import weka.core.Attribute;
 import weka.core.Instance;
@@ -33,7 +32,7 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 	private static final long serialVersionUID = 1L;
 	
 	
-	private Map<String, FilteredClusterer> locClustererMap;
+	private Map<String, SimpleKMeans> locClustererMap;
 	private Map<String, List<String>> locClustersMap;
 
 	// TODO: save this data into files after we do orig cluster?
@@ -43,7 +42,7 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 
 		Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
 				new int[] {2,3,4}, getLocClusters(userId), 
-				((SimpleKMeans) getLocClusterer(userId).getClusterer()).getAssignments());
+				getLocClusterer(userId).getAssignments());
 		allDataLoc.setClass(allDataLoc.attribute("ringer"));
 
 		return allDataLoc;
@@ -60,7 +59,7 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 	
 	@Override
 	protected void initForUser(String userId) throws Exception {
-		FilteredClusterer locClusterer = (FilteredClusterer) SerializationHelper.read(new FileInputStream(
+		SimpleKMeans locClusterer = (SimpleKMeans) SerializationHelper.read(new FileInputStream(
 				DataUploadServlet.constructUserFileName(userId,DataUploadServlet.LOC_CLUSTERER_FILE)));
 		locClustererMap.put(userId, locClusterer);
 
@@ -104,7 +103,7 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 		return json.toString();
 	}
 	
-	protected FilteredClusterer getLocClusterer(String userId) {
+	protected SimpleKMeans getLocClusterer(String userId) {
 		return locClustererMap.get(userId);
 	}
 	

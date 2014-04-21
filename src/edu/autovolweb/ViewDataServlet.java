@@ -155,9 +155,9 @@ public class ViewDataServlet extends HttpServlet {
 			viewData(allData, response.getWriter());
 			return;
 		} else if (type.equals("loc")) {
-			FilteredClusterer locClusterer;
+			SimpleKMeans locClusterer;
 			try {
-				locClusterer = (FilteredClusterer) SerializationHelper.read(new FileInputStream(
+				locClusterer = (SimpleKMeans) SerializationHelper.read(new FileInputStream(
 						DataUploadServlet.constructUserFileName(userId,DataUploadServlet.LOC_CLUSTERER_FILE)));
 				
 				String locJson = getFileJson(userId, DataUploadServlet.LOC_DATA_FILE);
@@ -167,13 +167,35 @@ public class ViewDataServlet extends HttpServlet {
 				List<String> topClusterList = gson.fromJson(locJson, locCollectionType);
 				Instances allDataLoc = CurrentStateUtil.replaceLocationData(allData, 
 						new int[] {2,3,4}, topClusterList, 
-						((SimpleKMeans) locClusterer.getClusterer()).getAssignments());
+						locClusterer.getAssignments());
 				allDataLoc.setClass(allDataLoc.attribute("ringer"));
 				viewData(allDataLoc, response.getWriter());
 			} catch (Exception e) {
 				e.printStackTrace(response.getWriter());
 			}
 			return;
+		} else if (type.equals("prob_loc")) {
+			
+			try {
+				EM em = (EM) SerializationHelper.read(new FileInputStream(
+						DataUploadServlet.constructUserFileName(userId, EmLocKnnClassifyServlet.EM_CLASSIFIER_FILE)));
+				
+				
+				ArrayList<String> clusterNames = new ArrayList<String>(em.numberOfClusters());
+				for (int i = 0; i < em.numberOfClusters(); i++) {
+					clusterNames.add(i + "");
+				}
+				Instances allDataLoc = EmLocKnnClassifyServlet.replaceLocData(allData, em,
+						clusterNames);
+				
+				response.getWriter().write("num loc clusters: " + em.numberOfClusters() + "\n");
+				allDataLoc.setClass(allDataLoc.attribute("ringer"));
+				viewData(allDataLoc, response.getWriter());
+			} catch (Exception e) {
+				e.printStackTrace(response.getWriter());
+			}
+			return;
+			
 		} else if (type.equals("load")) {
 			try {
 				FilteredClusterer em = (FilteredClusterer) SerializationHelper.read(new FileInputStream(

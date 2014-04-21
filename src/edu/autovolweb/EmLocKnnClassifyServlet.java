@@ -30,7 +30,7 @@ import com.google.gson.JsonObject;
 public class EmLocKnnClassifyServlet extends BaseKnnClassify {
 	private static final long serialVersionUID = 1L;
 	
-	private static final String EM_CLASSIFIER_FILE = "loc_em_classifier";
+	public static final String EM_CLASSIFIER_FILE = "loc_em_classifier";
 	
 	private Map<String, EM> emMap;
 	private Map<String, List<String>> clusterMap;
@@ -54,7 +54,13 @@ public class EmLocKnnClassifyServlet extends BaseKnnClassify {
 		EM em = (EM) SerializationHelper.read(new FileInputStream(filename));
 		emMap.put(userId, em);
 		
-		return replaceLocData(userId, data, em);
+		ArrayList<String> clusterNames = new ArrayList<String>(em.numberOfClusters());
+		for (int i = 0; i < em.numberOfClusters(); i++) {
+			clusterNames.add(i + "");
+		}
+		clusterMap.put(userId, clusterNames);
+		
+		return replaceLocData(data, em, clusterNames);
 	}
 	
 	@Override
@@ -117,12 +123,9 @@ public class EmLocKnnClassifyServlet extends BaseKnnClassify {
 		}
 	}
 	
-	private Instances replaceLocData(String userId, Instances data, EM em) throws Exception {
-		ArrayList<String> clusterNames = new ArrayList<String>(em.getNumClusters());
-		for (int i = 0; i < em.getNumClusters(); i++) {
-			clusterNames.add(i + "");
-		}
-		clusterMap.put(userId, clusterNames);
+	public static Instances replaceLocData(Instances data, EM em,
+			List<String> clusterNames) throws Exception {
+
 		
 		Remove removeLoc = new Remove();
 		removeLoc.setAttributeIndicesArray(new int[]{2,3,4});
