@@ -69,12 +69,12 @@ public class ViewDataServlet extends HttpServlet {
 		
 	}
 	
-	public static Instances loadAllData(String userId, HttpServlet servlet) {
+	public static Instances loadAllData(String userId, HttpServlet servlet) { // TODO: remove servlet param
 		List<Instances> allInstances = new ArrayList<Instances>();
 		DateTime today = new DateTime();
 		for (int i = 0; i < DataUploadServlet.DATA_AGE; i++) {
 			DateTime day = today.minusDays(i);
-			String fileName = DataUploadServlet.constructArffFileName(day, userId, servlet);
+			String fileName = DataUploadServlet.constructArffFileName(day, userId);
 			File f = new File(fileName);
 			if (f.exists()) {
 				try {

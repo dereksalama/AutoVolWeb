@@ -82,7 +82,7 @@ public class DataUploadServlet extends HttpServlet {
 			}
 	 }
 	 
-	 public static String constructArffFileName(DateTime day, String user, HttpServlet servlet) {
+	 public static String constructArffFileName(DateTime day, String user) {
 		 String safeNameConv = convertUser(user);
 		 String filename = safeNameConv + "_2_" + day.getDayOfMonth() + "_" +
 				 day.getMonthOfYear() + "_" + day.getYear(); 
@@ -288,7 +288,7 @@ public class DataUploadServlet extends HttpServlet {
 
 		// write to today's file
 		DateTime today = new DateTime();
-		String newFileName = constructArffFileName(today, userId, DataUploadServlet.this);
+		String newFileName = constructArffFileName(today, userId);
 
 		File newFile = new File(newFileName);
 		if (newFile.exists()) {
