@@ -284,7 +284,11 @@ public class DataUploadServlet extends HttpServlet {
 		// interpret incoming data
 
 		Instances allData = CurrentStateUtil.convertCurrentStateData(incomingDataString);
-		allData.sort(allData.attribute("time"));
+		if (allData == null || allData.isEmpty()) {
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+		//allData.sort(allData.attribute("time"));
 
 		// write to today's file
 		DateTime today = new DateTime();
@@ -298,7 +302,9 @@ public class DataUploadServlet extends HttpServlet {
 				Instances oldData = loader.getDataSet();
 				allData.addAll(oldData);
 			} catch (IOException e) {
-				e.printStackTrace();
+				e.printStackTrace(response.getWriter());
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+				return;
 			}
 		}
 
@@ -308,8 +314,9 @@ public class DataUploadServlet extends HttpServlet {
 			saver.setFile(newFile);
 			saver.writeBatch();
 		} catch (IOException e) {
-			e.printStackTrace();
-			response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Unable to write to file");
+			e.printStackTrace(response.getWriter());
+			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			return;
 		}
 
 		Instances data = ViewDataServlet.loadAllData(userId, this);

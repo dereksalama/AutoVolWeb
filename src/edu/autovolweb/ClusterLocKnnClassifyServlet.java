@@ -25,9 +25,11 @@ import weka.filters.unsupervised.attribute.Remove;
 
 /**
  * Servlet implementation class ClusterLocKnnClassifyServlet
+ * 
+ * NOTE: skipping loc clustering
  */
 @WebServlet("/ClusterLocKnnClassifyServlet")
-public class ClusterLocKnnClassifyServlet extends LocKnnClassifyServlet {
+public class ClusterLocKnnClassifyServlet extends BaseKnnClassify {
 	private static final long serialVersionUID = 1L;
 	
 	private static final int NUM_VECTORS_TO_CLUSTER = 8;
@@ -44,7 +46,7 @@ public class ClusterLocKnnClassifyServlet extends LocKnnClassifyServlet {
 
 	@Override
 	protected Instances loadData(String userId) throws Exception {
-		Instances allDataLoc = super.loadData(userId);
+		Instances allDataLoc = ViewDataServlet.loadAllData(userId, this);
 		
 		Remove r = new Remove();
 		r.setAttributeIndices("" + (allDataLoc.classIndex() + 1));
@@ -133,6 +135,7 @@ public class ClusterLocKnnClassifyServlet extends LocKnnClassifyServlet {
 		List<Instance> instances = new ArrayList<>(NUM_VECTORS_TO_CLUSTER);
 		Map<String, Integer> classCounts = new HashMap<>();
 		for (CurrentStateData state : states) {
+			/*
 			Instance locTarget = CurrentStateUtil.extractLocInstance(state);
 			String locCluster;
 			try {
@@ -145,8 +148,11 @@ public class ClusterLocKnnClassifyServlet extends LocKnnClassifyServlet {
 				locCluster = "other";
 			}
 			
+			
 			Instance target = CurrentStateUtil.toUnlabeledLocInstance(state, locCluster, 
 					getLocClusters(userId));
+					*/
+			Instance target = CurrentStateUtil.toUnlabeledInstance(state);
 			instances.add(target);
 			
 			Integer count = classCounts.get(state.getRinger());

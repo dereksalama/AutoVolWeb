@@ -88,8 +88,6 @@ public class ViewDataServlet extends HttpServlet {
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-			} else {
-				break; // have gone past oldest file
 			}
 		}
 		

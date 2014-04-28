@@ -32,7 +32,29 @@ public class CurrentStateUtil {
 		TypeToken<List<CurrentStateData>> typeToken = 
 				new TypeToken<List<CurrentStateData>>(){};
 		Type collectionType = typeToken.getType();
-		List<CurrentStateData> data = gson.fromJson(json, collectionType);
+		try {
+			List<CurrentStateData> data = gson.fromJson(json, collectionType);
+			return data;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		// gson parse failed, rescue as many as we can
+		// remove opening bracket
+		json = json.substring(1);
+		int closingBracket = json.indexOf('}');
+		List<CurrentStateData> data = new ArrayList<>();
+		while (closingBracket != -1) {
+			try{
+				String singleObs = json.substring(0, closingBracket + 1);
+				CurrentStateData state = gson.fromJson(singleObs, CurrentStateData.class);
+				data.add(state);
+				json = json.substring(closingBracket + 2, json.length());
+				closingBracket = json.indexOf('}');
+			} catch (Exception e) {
+				e.printStackTrace();
+				break;
+			}
+		}
 		return data;
 	}
 	
