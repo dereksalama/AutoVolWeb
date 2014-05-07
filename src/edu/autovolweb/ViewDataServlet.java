@@ -103,7 +103,19 @@ public class ViewDataServlet extends HttpServlet {
 		}
 		//allData.sort(1);
 		
-		return allData;
+		Remove r = new Remove();
+		int[] attrIndices = new int[1];
+		attrIndices[0] = allData.attribute("wifi_count").index();
+		r.setAttributeIndicesArray(attrIndices);
+		try {
+			r.setInputFormat(allData);
+			Instances result = Filter.useFilter(allData, r);
+			return result;
+		} catch (Exception e) {
+		}
+		
+		
+		return null;
 	}
 	
 	private void viewData(Instances allData, PrintWriter writer) {

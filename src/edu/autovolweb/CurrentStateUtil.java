@@ -97,7 +97,7 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
-		attributes.add(new Attribute("wifi_count"));
+		//attributes.add(new Attribute("wifi_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
@@ -181,7 +181,7 @@ public class CurrentStateUtil {
 
 		i.setValue(dataset.attribute("light"), state.getLight());
 		i.setValue(dataset.attribute("distance"), state.getDistance());
-		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
+		//i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
 		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
@@ -217,7 +217,7 @@ public class CurrentStateUtil {
 	
 	
 	private static Instance toInstance(CurrentStateData state, Instances dataset) {
-		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS);
+		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS - 1);
 		i.setDataset(dataset);
 		setUnlabeledValues(state, dataset, i);
 		i.setValue(dataset.attribute("ringer"), state.getRinger());
@@ -226,7 +226,7 @@ public class CurrentStateUtil {
 	}
 	
 	private static Instance toUnlabeledInstance(CurrentStateData state, Instances dataset) {
-		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS - 1);
+		Instance i = new DenseInstance(CurrentStateData.NUM_ATTRS - 2);
 		i.setDataset(dataset);
 		
 		setUnlabeledValues(state, dataset, i);
@@ -243,7 +243,7 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("loc_provider"), state.getLocProvider());
 		i.setValue(dataset.attribute("light"), state.getLight());
 		i.setValue(dataset.attribute("distance"), state.getDistance());
-		i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
+		//i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
 		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
 		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
@@ -295,7 +295,7 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
-		attributes.add(new Attribute("wifi_count"));
+		//attributes.add(new Attribute("wifi_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
@@ -333,7 +333,7 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
-		attributes.add(new Attribute("wifi_count"));
+		//attributes.add(new Attribute("wifi_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
@@ -376,7 +376,7 @@ public class CurrentStateUtil {
 		
 		attributes.add(new Attribute("light"));
 		attributes.add(new Attribute("distance"));
-		attributes.add(new Attribute("wifi_count"));
+		//attributes.add(new Attribute("wifi_count"));
 		
 		ArrayList<String> chargingValues = new ArrayList<String>();
 		chargingValues.add("true");
