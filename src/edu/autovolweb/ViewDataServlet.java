@@ -11,9 +11,9 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -25,9 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.joda.time.DateTime;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import weka.clusterers.EM;
 import weka.clusterers.FilteredClusterer;
 import weka.clusterers.SimpleKMeans;
@@ -38,6 +35,9 @@ import weka.core.converters.ArffLoader;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Normalize;
 import weka.filters.unsupervised.attribute.Remove;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Servlet implementation class ViewDataServlet
@@ -72,7 +72,7 @@ public class ViewDataServlet extends HttpServlet {
 	public static Instances loadAllData(String userId, HttpServlet servlet) { // TODO: remove servlet param
 		List<Instances> allInstances = new ArrayList<Instances>();
 		DateTime today = new DateTime();
-		for (int i = 0; i < DataUploadServlet.DATA_AGE; i++) {
+		for (int i = DataUploadServlet.DATA_AGE - 1; i >= 0; i--) {
 			DateTime day = today.minusDays(i);
 			String fileName = DataUploadServlet.constructArffFileName(day, userId);
 			File f = new File(fileName);
@@ -81,7 +81,7 @@ public class ViewDataServlet extends HttpServlet {
 					ArffLoader loader = new ArffLoader();
 					loader.setFile(f);
 					Instances moreData = loader.getDataSet();
-					Collections.sort(moreData, new TimeComparator());
+					//Collections.sort(moreData, new TimeComparator());
 					allInstances.add(moreData);
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -232,7 +232,12 @@ public class ViewDataServlet extends HttpServlet {
 				e.printStackTrace(response.getWriter());
 				return;
 			}
-		} 
+		} else if (type.equals("avg")) {
+			Instances avgData = AvgKnnClassifyServlet.avgData(allData, 4);
+			
+			viewData(avgData, response.getWriter());
+			return;
+		}
 
 		int numLocClusters = Integer.valueOf(request.getParameter("k"));
 

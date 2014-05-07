@@ -22,17 +22,31 @@ public class AvgKnnClassifyServlet extends BaseKnnClassify implements Servlet {
 	@Override
 	protected Instances loadData(String userId) throws Exception {
 		Instances data = ViewDataServlet.loadAllData(userId, this);
+		Instances avgData = avgData(data, NUM_VECTORS_TO_AVG);
+		
+		return avgData;
+	}
+	
+	public static Instances avgData(Instances data, int numVecsToAvg) {
 		Instances avgData = new Instances(data, data.numInstances() / 
-				NUM_VECTORS_TO_AVG);
+				numVecsToAvg);
+		avgData.setClass(avgData.attribute("ringer"));
 		LinkedList<Instance> queue = new LinkedList<>();
+		double currentDay = 0.0;
 		for (Instance i : data) {
-			queue.addFirst(i);
-			if (queue.size() > NUM_VECTORS_TO_AVG) {
-				queue.removeLast();
-			} else if (queue.size() == NUM_VECTORS_TO_AVG) {
-				Instance avg = DataUploadServlet.avgInstances(queue, avgData);
-				avgData.add(avg);
+			double day = i.value(data.attribute("day"));
+			if (day != currentDay) {
+				queue.clear();
+				currentDay = day;
 			}
+			queue.addFirst(i);
+			if (queue.size() > numVecsToAvg) {
+				queue.removeLast();
+			} else if (queue.size() < numVecsToAvg) {
+				continue;
+			}
+			Instance avg = DataUploadServlet.avgInstances(queue, avgData);
+			avgData.add(avg);
 		}
 		
 		return avgData;

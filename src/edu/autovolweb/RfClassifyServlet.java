@@ -24,7 +24,7 @@ import com.google.gson.JsonObject;
  * Servlet implementation class RfClassifyServlet
  */
 @WebServlet("/RfClassifyServlet")
-public class RfClassifyServlet extends HttpServlet {
+public class RfClassifyServlet extends ClearingHttpServlet {
 	private static final long serialVersionUID = 1L;
 	
 	private Map<String, RandomForest> rfMap;
@@ -97,10 +97,17 @@ public class RfClassifyServlet extends HttpServlet {
 		rf.buildClassifier(data);
 	}
 
-	protected Instances loadData(String userId) {
+	protected Instances loadData(String userId) throws Exception {
 		Instances data = ViewDataServlet.loadAllData(userId, this);
 		data.setClass(data.attribute("ringer"));
 		return data;
+	}
+
+
+	@Override
+	protected void clear() {
+		rfMap.clear();
+		initializedUsers.clear();	
 	}
 
 

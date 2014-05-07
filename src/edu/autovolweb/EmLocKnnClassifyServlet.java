@@ -41,6 +41,13 @@ public class EmLocKnnClassifyServlet extends BaseKnnClassify {
 		emMap = new HashMap<>();
 		clusterMap = new HashMap<>();
 	}
+	
+	@Override
+	protected void clear() {
+		super.clear();
+		emMap.clear();
+		clusterMap.clear();
+	}
 
 	@Override
 	protected Instances loadData(String userId) throws Exception {
@@ -151,7 +158,7 @@ public class EmLocKnnClassifyServlet extends BaseKnnClassify {
 		return result;
 	}
 	
-	private Instance extractLocInstance(CurrentStateData state) {
+	public static Instance extractLocInstance(CurrentStateData state) {
 		Instance locInstance = new DenseInstance(2);
 		
 		ArrayList<Attribute> locAttr = new ArrayList<>();

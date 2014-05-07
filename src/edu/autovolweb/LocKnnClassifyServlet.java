@@ -34,6 +34,13 @@ public class LocKnnClassifyServlet extends BaseKnnClassify {
 	
 	private Map<String, SimpleKMeans> locClustererMap;
 	private Map<String, List<String>> locClustersMap;
+	
+	@Override
+	protected void clear() {
+		super.clear();
+		locClustererMap.clear();
+		locClustersMap.clear();
+	}
 
 	// TODO: save this data into files after we do orig cluster?
 	@Override

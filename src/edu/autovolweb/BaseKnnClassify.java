@@ -19,13 +19,19 @@ import weka.core.neighboursearch.KDTree;
 
 import com.google.gson.JsonObject;
 
-public abstract class BaseKnnClassify extends HttpServlet {
+public abstract class BaseKnnClassify extends ClearingHttpServlet {
 	private static final long serialVersionUID = -1119373032862346060L;
 
 	private Map<String, KDTree> kdMap;
 	private Set<String> initializedUsers;
 	
 	private static int[] ks = new int[] {3, 7, 13};
+	
+	@Override
+	protected void clear() {
+		kdMap.clear();
+		initializedUsers.clear();	
+	}
 
 	
 	/**

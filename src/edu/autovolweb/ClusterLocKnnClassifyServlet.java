@@ -43,7 +43,13 @@ public class ClusterLocKnnClassifyServlet extends BaseKnnClassify {
 		super.init();
 		clustererMap = new ConcurrentHashMap<>();
 	}
-
+	
+	@Override
+	protected void clear() {
+		super.clear();
+		clustererMap.clear();
+	}
+	
 	@Override
 	protected Instances loadData(String userId) throws Exception {
 		Instances allDataLoc = ViewDataServlet.loadAllData(userId, this);

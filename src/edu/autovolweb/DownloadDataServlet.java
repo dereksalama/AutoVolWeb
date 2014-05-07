@@ -58,6 +58,9 @@ public class DownloadDataServlet extends HttpServlet {
 				e.printStackTrace();
 				return;
 			}
+		} else if (type != null && type.equals("avg")) {
+			Instances data = ViewDataServlet.loadAllData(userId, this);
+			allData = AvgKnnClassifyServlet.avgData(data, 8);
 		} else {
 			allData = ViewDataServlet.loadAllData(userId, this);
 		}
