@@ -66,9 +66,10 @@ public abstract class BaseKnnClassify extends ClearingHttpServlet {
 		}
 		JsonObject json = new JsonObject();
 		KDTree kd = kdMap.get(userId);
-		for (int k : ks) {
-			addResult(json, target, kd, k);
-		}
+		//for (int k : ks) {
+		//	addResult(json, target, kd, k);
+		//}
+		addResult(json, target, kd, 7); // K = 7
 		
 		response.getWriter().write(prepareOutput(json, target));
 	}
@@ -126,7 +127,7 @@ public abstract class BaseKnnClassify extends ClearingHttpServlet {
 		
 		String label = target.classAttribute().value(maxIndex);
 		//Double prob = ((double) maxCount) / k;
-		json.addProperty("" + k, label);
+		json.addProperty("result", label);
 		//json.addProperty(k + "_prob", prob);
     }
 	

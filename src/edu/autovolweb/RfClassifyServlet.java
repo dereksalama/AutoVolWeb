@@ -75,10 +75,10 @@ public class RfClassifyServlet extends ClearingHttpServlet {
 		try {
 			classification = rf.classifyInstance(target);
 			String classStr = target.classAttribute().value((int) classification);
-			json.addProperty("rf",classStr);
+			json.addProperty("result",classStr);
 		} catch (Exception e) {
 			e.printStackTrace();
-			json.addProperty("rf","err");
+			json.addProperty("result","err");
 		}
 		response.getWriter().write(json.toString());
 	}

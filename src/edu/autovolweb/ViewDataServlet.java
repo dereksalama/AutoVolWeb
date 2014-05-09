@@ -95,14 +95,24 @@ public class ViewDataServlet extends HttpServlet {
 			return null;
 		}
 		
-		Instances allData = allInstances.get(0);
-		allData.setClassIndex(allData.numAttributes() - 1);
+		Instances allDataWifi = allInstances.get(0);
+		Instances allData = removeWifiCount(allDataWifi);
+		allData.setClass(allData.attribute("ringer"));
 		allInstances.remove(0);
 		for (Instances i : allInstances) {
-			allData.addAll(i);
+			if (i.attribute("wifi_count") != null) {
+				i = removeWifiCount(i);
+			}
+			if (i != null) {
+				allData.addAll(i);
+			}
 		}
 		//allData.sort(1);
 		
+		return allData;
+	}
+
+	private static Instances removeWifiCount(Instances allData) {
 		Remove r = new Remove();
 		int[] attrIndices = new int[1];
 		attrIndices[0] = allData.attribute("wifi_count").index();
@@ -112,10 +122,9 @@ public class ViewDataServlet extends HttpServlet {
 			Instances result = Filter.useFilter(allData, r);
 			return result;
 		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
-		
-		
-		return null;
 	}
 	
 	private void viewData(Instances allData, PrintWriter writer) {
