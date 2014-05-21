@@ -245,8 +245,17 @@ public class CurrentStateUtil {
 		i.setValue(dataset.attribute("distance"), state.getDistance());
 		//i.setValue(dataset.attribute("wifi_count"), state.getWifiCount());
 		i.setValue(dataset.attribute("charging"), state.getCharging());
-		i.setValue(dataset.attribute("activity_type"), state.getActivityType());
-		i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
+		if (state.getActivityType() != null) {
+			i.setValue(dataset.attribute("activity_type"), state.getActivityType());
+		} else {
+			i.setMissing(dataset.attribute("activity_type"));
+		}
+		
+		if (state.getActivityConfidence() != 0.0) {
+			i.setValue(dataset.attribute("activity_confidence"), state.getActivityConfidence());
+		} else {
+			i.setMissing(dataset.attribute("activity_confidence"));
+		}
 		
 		i.setValue(dataset.attribute("screen_on"), state.getScreenOn());
 		i.setValue(dataset.attribute("screen_last_on"), state.getScreenLastOn());

@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -51,7 +53,7 @@ import com.google.gson.Gson;
 public class DataUploadServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	
-	public static final int DATA_AGE = 14; //keep data for two weeks
+	public static final int DATA_AGE = 21; //keep data for two weeks
 	
 	//TODO
 	public static final int NUM_LOC_CLUSTERS = 20;
@@ -67,6 +69,9 @@ public class DataUploadServlet extends HttpServlet {
 	private static final int NUM_VECTORS_TO_AVG = 4;
     
 	private ExecutorService executor;
+	
+	private static String nameOfLogger = DataUploadServlet.class.getName();
+	private static Logger logger = Logger.getLogger(nameOfLogger);
 	
 	 @Override
 	 public void init() throws ServletException {
@@ -259,6 +264,7 @@ public class DataUploadServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		
+		
 		//final String incomingDataString = request.getParameter("data");
 		StringBuffer buffer = new StringBuffer();
 		String line = null;
@@ -269,6 +275,8 @@ public class DataUploadServlet extends HttpServlet {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+		String safeUserId = convertUser(userId);
+		logger.info("Upload from " + safeUserId + " @ " + new Date());
 		
 		while ((line = reader.readLine()) != null) {
 			buffer.append(line);
@@ -318,18 +326,9 @@ public class DataUploadServlet extends HttpServlet {
 			response.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+		logger.info("Upload from " + safeUserId + " @ " + new Date() + " success");
 
 		Instances data = ViewDataServlet.loadAllData(userId, this);
-		try {
-			locClassify(data, userId);
-		} catch (Exception e) {
-			e.printStackTrace();
-			//response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error doing loc cluster");
-		}
-		//TODO: put back after debugging
-		//executor.submit(new RetrainRunnable(userId));
-		//new RetrainRunnable(incomingDataString, userId).run();
-		
 		executor.submit(new EmLocKnnClassifyServlet.ClusterLocations(data, userId));
 
 		

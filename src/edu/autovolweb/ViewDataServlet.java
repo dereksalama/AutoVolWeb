@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -45,6 +47,9 @@ import com.google.gson.reflect.TypeToken;
 @WebServlet("/ViewDataServlet")
 public class ViewDataServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	
+	private static String nameOfLogger = ViewDataServlet.class.getName();
+	private static Logger logger = Logger.getLogger(nameOfLogger);
 	
 	static class TimeComparator implements Comparator<Instance> {
 
@@ -86,6 +91,7 @@ public class ViewDataServlet extends HttpServlet {
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
+					logger.log(Level.SEVERE, "Error loading file " + fileName);
 					e.printStackTrace();
 				}
 			}
@@ -100,10 +106,8 @@ public class ViewDataServlet extends HttpServlet {
 		allData.setClass(allData.attribute("ringer"));
 		allInstances.remove(0);
 		for (Instances i : allInstances) {
-			if (i.attribute("wifi_count") != null) {
-				i = removeWifiCount(i);
-			}
 			if (i != null) {
+				i = removeWifiCount(i);
 				allData.addAll(i);
 			}
 		}
@@ -115,6 +119,9 @@ public class ViewDataServlet extends HttpServlet {
 	private static Instances removeWifiCount(Instances allData) {
 		Remove r = new Remove();
 		int[] attrIndices = new int[1];
+		if (allData.attribute("wifi_count") == null) {
+			return allData;
+		}
 		attrIndices[0] = allData.attribute("wifi_count").index();
 		r.setAttributeIndicesArray(attrIndices);
 		try {

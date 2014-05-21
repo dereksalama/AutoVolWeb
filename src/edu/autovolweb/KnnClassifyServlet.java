@@ -3,10 +3,10 @@ package edu.autovolweb;
 
 import javax.servlet.annotation.WebServlet;
 
-import com.google.gson.Gson;
-
 import weka.core.Instance;
 import weka.core.Instances;
+
+import com.google.gson.Gson;
 
 /**
  * Servlet implementation class KnnClassifyServlet
@@ -14,6 +14,7 @@ import weka.core.Instances;
 @WebServlet("/KnnClassifyServlet")
 public class KnnClassifyServlet extends BaseKnnClassify {
 	private static final long serialVersionUID = 1L;
+
 	
 	@Override
 	protected Instances loadData(String userId) throws Exception {
